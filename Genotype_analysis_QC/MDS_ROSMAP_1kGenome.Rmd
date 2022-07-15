@@ -1,0 +1,133 @@
+---
+title: "Generating MDS values for ROSMAP and merging them with 1kGenome"
+author: "Amin Kharaghani"
+date: '2022-05-10'
+output: html_document
+---
+
+```{bash}
+module load PLINK/1.9
+plink \
+--vcf ALL.2of4intersection.20100804.genotypes.vcf.gz \
+--make-bed \
+--out ./PLINK_MDS/ALL.2of4intersection.20100804.genotypes
+
+plink \
+--bfile ./PLINK_MDS/ALL.2of4intersection.20100804.genotypes \
+--set-missing-var-ids @:#[b37]\$1,\$2 \
+  --make-bed \
+--out ./PLINK_MDS/ALL.2of4intersection.20100804.genotypes_no_missing_IDs
+
+plink \
+--bfile ./PLINK_MDS/ALL.2of4intersection.20100804.genotypes_no_missing_IDs \
+--geno 0.2 \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS \
+--mind 0.2 \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS2
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS2 \
+--geno 0.02 \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS3
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS3 \
+--mind 0.02 \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS4
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS4 \
+--maf 0.05 \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS5
+awk '{print$2}' ./PLINK_QC/rosmap9.bim> ./PLINK_MDS/rosmap_snps.txt
+
+plink \
+--bfile 1kG_MDS5 \
+--extract ./PLINK_MDS/rosmap_snps.txt \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS6
+awk '{print$2}' ./PLINK_MDS/1kG_MDS6.bim > ./PLINK_MDS/1kG_MDS6_SNPs.txt
+
+plink \
+--bfile ./PLINK_QC/rosmap9 \
+--extract ./PLINK_MDS/1kG_MDS6_SNPs.txt \
+--recode \
+--make-bed \
+--out ./PLINK_MDS/rosmap_MDS
+awk '{print$2,$4}' ./PLINK_MDS/rosmap_MDS.map > ./PLINK_MDS/buildrosmap.txt
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS6 \
+--update-map ./PLINK_MDS/buildrosmap.txt \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS7
+awk '{print$2,$5}' ./PLINK_MDS/1kG_MDS7.bim > ./PLINK_MDS/1kg_ref-list.txt
+
+plink \
+--bfile ./PLINK_MDS/rosmap_MDS \
+--reference-allele ./PLINK_MDS/1kg_ref-list.txt \
+--make-bed \
+--out ./PLINK_MDS/rosmap-adj
+awk '{print$2,$5,$6}' ./PLINK_MDS/1kG_MDS7.bim > ./PLINK_MDS/1kGMDS7_tmp
+awk '{print$2,$5,$6}' ./PLINK_MDS/rosmap-adj.bim > ./PLINK_MDS/rosmap-adj_tmp sort ./PLINK_MDS/1kGMDS7_tmp ./PLINK_MDS/rosmap-adj_tmp |uniq -u > ./PLINK_MDS
+/all_differences.txt
+awk '{print$1}' ./PLINK_MDS/all_differences.txt | sort -u > ./PLINK_MDS/flip_list.txt
+
+plink \
+--bfile ./PLINK_MDS/rosmap-adj \
+--flip ./PLINK_MDS/flip_list.txt \
+--reference-allele ./PLINK_MDS/1kg_ref-list.txt \
+--make-bed \
+--out ./PLINK_MDS/corrected_rosmap
+awk '{print$2,$5,$6}' ./PLINK_MDS/corrected_rosmap.bim > ./PLINK_MDS/corrected_rosmap_tmp sort ./PLINK_MDS/1kGMDS7_tmp ./PLINK_MDS/corrected_rosmap_tmp |uniq -u > ./PLINK_MDS
+/uncorresponding_SNPs.txt
+awk '{print$1}' ./PLINK_MDS/uncorresponding_SNPs.txt | sort -u > ./PLINK_MDS /SNPs_for_exlusion.txt
+
+plink \
+--bfile ./PLINK_MDS/corrected_rosmap \
+--exclude ./PLINK_MDS/SNPs_for_exlusion.txt \
+--make-bed \
+--out ./PLINK_MDS/rosmap_MDS2
+
+plink \
+--bfile ./PLINK_MDS/1kG_MDS7 \
+--exclude ./PLINK_MDS/SNPs_for_exlusion.txt \
+--make-bed \
+--out ./PLINK_MDS/1kG_MDS8
+
+plink \
+--bfile ./PLINK_MDS/rosmap_MDS2 \
+--bmerge ./PLINK_MDS/1kG_MDS8.bed ./PLINK_MDS/1kG_MDS8.bim ./PLINK_MDS/1kG_MDS8.fam \
+--allow-no-sex \
+--make-bed \
+--out ./PLINK_MDS/MDS_merge2
+
+plink \
+--bfile ./PLINK_MDS/MDS_merge2 \
+--extract ./PLINK_QC/indepSNP.prune.in \
+--genome \
+--out ./PLINK_MDS/MDS_merge3
+
+plink \
+--bfile ./PLINK_MDS/MDS_merge2 \
+--read-genome ./PLINK_MDS/MDS_merge3.genome \
+--cluster \
+--mds-plot 10 \
+--out ./PLINK_MDS/MDS_merge4
+awk '{print$1,$2,"OWN"}' ./PLINK_MDS/rosmap_MDS.fam>./MDS_plotting/racefile_own.txt
+ cat ./MDS_plotting/race_1kG14.txt ./MDS_plotting/racefile_own.txt | sed -e '1i\FID IID race' > ./MDS_plotting/racefile.txt
+```
+

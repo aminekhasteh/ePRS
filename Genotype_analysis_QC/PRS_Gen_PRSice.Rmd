@@ -1,0 +1,54 @@
+---
+title: "Generating PRS (PRSice)"
+output: github_document
+---
+
+# Using PRSice v2.3.3
+
+```{bash eval=FALSE, include=TRUE}
+#!/bin/bash --login
+#SBATCH --time=45:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=5
+#SBATCH --job-name=prsukbb
+#SBATCH --output prs_ukbb_overlap1.out.txt
+
+cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/PRS_PRSice/sum_stats_1/ #############
+module load PYTHON/3.6
+
+START=$(date +%s.%N)
+while read url <&3 && read pheno_names <&4; do
+    wget $url 
+    gunzip -c *.bgz > $pheno_names
+	  rm *.bgz
+	  python /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/PRS_PRSice/py_files/clean_data_overlap_1.py ###############
+    rm *.tsv
+    	/external/rprshnas01/netdata_kcni/dflab/team/ak/PRSice_linux \ 
+          --A1 A1 \
+          --A2 A2 \
+          --all-score  \
+          --bar-levels 5e-08,1e-07,1e-06,1e-05,0.0001,0.001,0.01,0.05,0.1,1 \
+          --base *.txt \
+          --beta  \
+          --binary-target F \
+          --clump-kb 500 \
+          --clump-p 1 \
+          --clump-r2 0.2 \
+          --fastscore  \
+          --model add \
+          --no-regress  \
+          --out /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/PRS_PRSice/PRS/$pheno_names \
+          --pvalue P \
+	      --snp SNP \
+	      --print-snp \
+          --stat BETA \
+          --target /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+          --thread 2
+     rm *.txt
+     echo $pheno_names
+done 3< /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/url/url_aa.txt 4</external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/pheno_names/pheno_names_aa.txt ########
+END=$(date +%s.%N)
+DIFF=$(echo "$END - $START" | bc)
+echo $DIFF
+
+```
