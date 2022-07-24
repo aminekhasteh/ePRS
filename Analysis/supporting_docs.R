@@ -106,7 +106,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                 rownames(df) <- df$IID
                                 df$IID <- NULL
                                 
-                                #### Modelling against IGAP
+                                #### Modelling against LOAD 
                                 # merge data
                                 MEs <- net$MEs
                                 MEs$IID <- rownames(MEs)
@@ -130,9 +130,9 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 print(paste(egene,pheno,alpha))
                                                                                 if(egene=="grey"){next}
                                                                                 if (pheno=="cogdx"){
-                                                                                base_form <- formula(paste(pheno,"~","IGAP_AD+msex+age_death+pmi"))
+                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
                                                                                 form <- formula(paste(pheno,"~","+msex+age_death+pmi"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+IGAP_AD+msex+age_death+pmi"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+age_death+pmi"))
                                                                                 mod_base <- lrm(data=md3,base_form, y=T, x=T)
                                                                                 mod <- lrm(data=md3,form, y=T, x=T)
                                                                                 mod_full <- lrm(data=md3,form_full, y=T, x=T)
@@ -149,7 +149,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 dxy <- NULL
                                                                                 dxy1 <- NULL
                                                                                 dxy2 <- NULL
-                                                                                for(i in 1 : 400) {
+                                                                                for(i in 1 : 50) {
                                                                                                 f <- mod_base
                                                                                                 f1 <- mod
                                                                                                 f2 <- mod_full
@@ -164,17 +164,17 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                                 dxy1[i] <- v1['Dxy', 'index.corrected'] * 0.5 + 0.5
                                                                                                 dxy2[i] <- v2['Dxy', 'index.corrected'] * 0.5 + 0.5
                                                                                 }
-                                                                                R2_base_CI_L <-  as.numeric(quantile(dxy, c(.025, .975))[1])
-                                                                                R2_base_CI_U <-  as.numeric(quantile(dxy, c(.025, .975))[2])
-                                                                                R2_CI_L <-  as.numeric(quantile(dxy1, c(.025, .975))[1])
-                                                                                R2_CI_U <-  as.numeric(quantile(dxy1, c(.025, .975))[2])
-                                                                                R2_full_CI_L <-  as.numeric(quantile(dxy2, c(.025, .975))[1])
-                                                                                R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975))[2])
+                                                                                R2_base_CI_L <-  as.numeric(quantile(dxy, c(.025, .975),na.rm=T)[1])
+                                                                                R2_base_CI_U <-  as.numeric(quantile(dxy, c(.025, .975),na.rm=T)[2])
+                                                                                R2_CI_L <-  as.numeric(quantile(dxy1, c(.025, .975),na.rm=T)[1])
+                                                                                R2_CI_U <-  as.numeric(quantile(dxy1, c(.025, .975),na.rm=T)[2])
+                                                                                R2_full_CI_L <-  as.numeric(quantile(dxy2, c(.025, .975),na.rm=T)[1])
+                                                                                R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975),na.rm=T)[2])
                                                                 } 
                                                                                 if (pheno=="cogn_global_random_slope"|pheno=="cogn_globaln_lv"){
-                                                                                base_form <- formula(paste(pheno,"~","IGAP_AD+msex+educ"))
+                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+educ"))
                                                                                 form <- formula(paste(pheno,"~","+msex+educ"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+IGAP_AD+msex+educ"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+educ"))
                                                                                 mod_base <- ols(data=md3,base_form, y=T, x=T)
                                                                                 mod <- ols(data=md3,form, y=T, x=T)
                                                                                 mod_full <- ols(data=md3,form_full, y=T, x=T)
@@ -191,7 +191,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 dxy <- NULL
                                                                                 dxy1 <- NULL
                                                                                 dxy2 <- NULL
-                                                                                for(i in 1 : 400) {
+                                                                                for(i in 1 : 50) {
                                                                                                 f <- mod_base
                                                                                                 f1 <- mod
                                                                                                 f2 <- mod_full
@@ -214,9 +214,9 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975))[2])
                                                                 } 
                                                                                 if (pheno=="tangles_sqrt"|pheno=="amyloid_sqrt"){
-                                                                                base_form <- formula(paste(pheno,"~","IGAP_AD+msex+age_death+pmi"))
+                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
                                                                                 form <- formula(paste(pheno,"~","+msex+age_death+pmi"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+IGAP_AD+msex+age_death+pmi"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+age_death+pmi"))
                                                                                 mod_base <- ols(data=md3,base_form, y=T, x=T)
                                                                                 mod <- ols(data=md3,form, y=T, x=T)
                                                                                 mod_full <- ols(data=md3,form_full, y=T, x=T)
@@ -233,7 +233,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 dxy <- NULL
                                                                                 dxy1 <- NULL
                                                                                 dxy2 <- NULL
-                                                                                for(i in 1 : 400) {
+                                                                                for(i in 1 : 50) {
                                                                                                 f <- mod_base
                                                                                                 f1 <- mod
                                                                                                 f2 <- mod_full
@@ -303,7 +303,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
 
 
 
-# 1) ROSMAP demographic Table ------
+## 1) ROSMAP demographic Table ------
 
 GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")
 
@@ -330,7 +330,7 @@ path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesi
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_noapoe <- list()
 for(alpha in names(prs)){
-                prs_noapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_AD        
+                prs_noapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
 }
 prs_noapoe <- do.call(cbind.data.frame, prs_noapoe) %>%
                 rename_all(funs(paste0(.,"_noapoe"))) %>%
@@ -341,7 +341,7 @@ path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesi
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_nomhc <- list()
 for(alpha in names(prs)){
-                prs_nomhc[[alpha]] <- prs[[alpha]]$residuals$IGAP_AD        
+                prs_nomhc[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
 }
 prs_nomhc <- do.call(cbind.data.frame, prs_nomhc) %>%
                 rename_all(funs(paste0(.,"_nomhc"))) %>%
@@ -352,7 +352,7 @@ path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesi
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_nomhcapoe <- list()
 for(alpha in names(prs)){
-                prs_nomhcapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_AD        
+                prs_nomhcapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
 }
 prs_nomhcapoe <- do.call(cbind.data.frame, prs_nomhcapoe)  %>%
                 rename_all(funs(paste0(.,"_nomhcapoe"))) %>%
@@ -363,7 +363,7 @@ path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesi
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_all <- list()
 for(alpha in names(prs)){
-                prs_all[[alpha]] <- prs[[alpha]]$residuals$IGAP_AD        
+                prs_all[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
 }
 prs_all <- do.call(cbind.data.frame, prs_all) %>%
                 rename_all(funs(paste0(.,"_all"))) %>%
@@ -438,7 +438,7 @@ table1 <- ROSmaster %>% mutate(LOAD = ifelse(dcfdx_lv==4|dcfdx_lv==5,"AD",
 write.csv(table1,"/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis/Manuscript/Figures/Table1.csv",row.names = F)
 
 
-# 1.1) patho/cog variables distribution ----
+## 1.1) patho/cog variables distribution ----
 
 # Reading ROS/MAP phenotype dataset
 ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
@@ -486,21 +486,22 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 path_to_save <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PRS/"
 
 # Reading Filtered PNUKBB manifest
-meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
 
-GClambda_after_QC <- read.csv(paste0(path_to_save,"GClambda_ALL.txt"))
-GClambda_after_QC$X <- NULL
-names(GClambda_after_QC) <- c("GClambda","phenotype")
-GClambda_after_QC$phenotype <- gsub(".tsv.txt","",gsub("/external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/PRS_PRSice/GCLambda/","",GClambda_after_QC$phenotype))
-i1 <- match(GClambda_after_QC$phenotype, meta_pheno$phenocode_annotate_lst)
-i2 <- !is.na(i1) # to take care of non matches which are NA
-GClambda_after_QC <- GClambda_after_QC %>%
-                mutate(phenotype_new = meta_pheno$new_pheno_annot[i1[i2]],
-                       GC_lambda_before = meta_pheno$lambda_gc_EUR[i1[i2]],
-                       hertiability = meta_pheno$saige_heritability_EUR[i1[i2]],
-                       cases_n = meta_pheno$n_cases_EUR[i1[i2]],
-                       control_n = meta_pheno$n_controls_EUR[i1[i2]],
-                       remove = meta_pheno$to_remove[i1[i2]],
+# GClambda_after_QC <- read.csv(paste0(path_to_save,"GClambda_ALL.txt"))
+# GClambda_after_QC$X <- NULL
+# names(GClambda_after_QC) <- c("GClambda","phenotype")
+# GClambda_after_QC$phenotype <- gsub(".tsv.txt","",gsub("/external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/UK_BioBank_7k_pheno/PRS_PRSice/GCLambda/","",GClambda_after_QC$phenotype))
+# i1 <- match(GClambda_after_QC$phenotype, meta_pheno$phenocode_annotate_lst)
+# i2 <- !is.na(i1) # to take care of non matches which are NA
+GClambda_after_QC <- meta_pheno %>%
+                mutate(phenotype_new =  new_pheno_annot ,
+                       GC_lambda_before =  lambda_gc_EUR.y ,
+                       hertiability =  saige_heritability_EUR ,
+                       cases_n =  n_cases_EUR ,
+                       control_n =  n_controls_EUR ,
+                       remove =  to_remove ,
+                       phenotype_qc_EUR = phenotype_qc_EUR,
                        phenotype = gsub("pr ","",
                                          gsub("cabg","",
                                               gsub("medadj","",
@@ -509,20 +510,24 @@ GClambda_after_QC <- GClambda_after_QC %>%
                                                                             phenotype_new)),4))))),
                        case_control = ifelse(is.na(control_n),"F","T"),
                        n = ifelse(is.na(control_n),cases_n,cases_n+control_n)) %>% 
-                filter(remove!=1)
+                filter(remove!=1,
+                       !is.na(phenotype_qc_EUR))
 
-a <- GClambda_after_QC %>% filter(case_control=='T')
+a <- GClambda_after_QC %>% filter(case_control=='T',
+                                  phenotype_qc_EUR!="")
 print(dim(a)[1])
 g1 <- ggplot(a,
        aes(x=GC_lambda_before,
            y=hertiability,
-           color=n)) +
+           color=n,
+           shape=phenotype_qc_EUR)) +
                 geom_point(size=1.5) +
                 theme_bw() +
                 ylab(latex2exp::TeX("Hertiability Ratio ($\\H^2$)")) +
                 xlab(latex2exp::TeX("Genomic Inflation Factor ($\\lambda_{GC}$)")) +
                 ggtitle(latex2exp::TeX("Relationship between $\\H^2$ and $\\lambda_{GC}$ for categorical traits (n=2,031)")) +
                 theme(plot.title = element_text(hjust = 0.5)) +
+                scale_shape_discrete(name="Phenotype QC") +
                 scale_y_continuous(breaks = c(0.05,
                                               0.1,0.15,
                                               0.20,0.25,
@@ -539,21 +544,29 @@ g1 <- ggplot(a,
                                                 signif(max(a$n),2))) +
                 geom_label_repel(aes(GC_lambda_before,
                                      label = phenotype),
-                                 data = a %>% filter(GC_lambda_before==max(.$GC_lambda_before)|
-                                                                     hertiability  == max(.$hertiability)))
+                                 # data = a %>% filter(phenotype_qc_EUR=="PASS"),
+                                 data = a %>% filter(phenotype_qc_EUR=="PASS") %>% 
+                                                     filter(GC_lambda_before==max(.$GC_lambda_before)|
+                                                                     hertiability  == max(.$hertiability)),
+                                 fill=NA,
+                                 color="black", 
+                                 max.overlaps = Inf)
 
-b <- GClambda_after_QC %>% filter(case_control=='F')
+b <- GClambda_after_QC %>% filter(case_control=='F',
+                                  phenotype_qc_EUR!="")
 print(dim(b)[1])
 g2 <- ggplot(b,
              aes(x=GC_lambda_before,
                  y=hertiability,
-                 color=n)) +
+                 color=n,
+                 shape=phenotype_qc_EUR)) +
                 geom_point(size=1.5) +
                 theme_bw() +
                 ylab(latex2exp::TeX("Hertiability Ratio ($\\H^2$)")) +
                 xlab(latex2exp::TeX("Genomic Inflation Factor ($\\lambda_{GC}$)")) +
                 ggtitle(latex2exp::TeX("Relationship between $\\H^2$ and $\\lambda_{GC}$ for continuous traits (n=205)")) +
                 theme(plot.title = element_text(hjust = 0.5)) +
+                scale_shape_discrete(name="Phenotype QC") +
                 scale_y_continuous(breaks = c(0.05,
                                               0.1,0.15,
                                               0.20,0.25,
@@ -570,8 +583,11 @@ g2 <- ggplot(b,
                                                 signif(max(b$n),2))) +
                 geom_label_repel(aes(GC_lambda_before,
                                      label = phenotype),
-                                 data = b %>% filter(GC_lambda_before==max(.$GC_lambda_before)|
-                                                                     hertiability  == max(.$hertiability)))
+                                 data = b %>% filter(phenotype_qc_EUR=="PASS") %>% 
+                                                 filter(GC_lambda_before==max(.$GC_lambda_before)|
+                                                                        hertiability  == max(.$hertiability)),
+                                 fill=NA,
+                                 colour="black")
 
 p <- plot_grid(g1, g2, labels=c('A', 'B'),nrow = 2)
 
@@ -619,7 +635,7 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 # print(plot_grid(p, ncol=1, rel_heights=c(0.1, 1)))
 # dev.off()
 
-# .3) Principal Components plots (PCA) ----
+# 3) Principal Components plots (PCA) ----
 
 Genotype="With_MHC_APOE"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
@@ -675,7 +691,8 @@ p1 <- ggplot(pc_info_dat,
                                  aes(label=paste0(str_sub(gsub("_"," ",sub("\\h0..*", "", PC_contributors)),4)," (",
                                                   str_extract(PC_contributors,"\\d+(\\.\\d+){0,1}%"),")")),
                                  col="black",size=3.5,
-                                 fontface="bold")
+                                 fontface="bold",
+                                 fill=NA)
 
 
 Genotype="No_APOE"
@@ -732,7 +749,8 @@ p2 <- ggplot(pc_info_dat,
                                  aes(label=paste0(str_sub(gsub("_"," ",sub("\\h0..*", "", PC_contributors)),4)," (",
                                                   str_extract(PC_contributors,"\\d+(\\.\\d+){0,1}%"),")")),
                                  col="black",size=3.5,
-                                 fontface="bold")
+                                 fontface="bold",
+                                 fill=NA)
 
 Genotype="No_MHC"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
@@ -788,7 +806,8 @@ p3 <- ggplot(pc_info_dat,
                                  aes(label=paste0(gsub("PR ","",str_sub(gsub("_"," ",sub("\\h0..*", "", PC_contributors)),4))," (",
                                                   str_extract(PC_contributors,"\\d+(\\.\\d+){0,1}%"),")")),
                                  col="black",size=3.5,
-                                 fontface="bold")
+                                 fontface="bold",
+                                 fill=NA)
 
 Genotype="No_MHC_APOE"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
@@ -844,7 +863,8 @@ p4 <- ggplot(pc_info_dat,
                                  aes(label=paste0(gsub("PR ","",str_sub(gsub("_"," ",sub("\\h0..*", "", PC_contributors)),4))," (",
                                                   str_extract(PC_contributors,"\\d+(\\.\\d+){0,1}%"),")")),
                                  col="black",size=3.5,
-                                 fontface="bold")
+                                 fontface="bold",
+                                 fill=NA)
 
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_ALL.jpg",p1,
        w=12,h=10, dpi=700)
@@ -854,7 +874,7 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
        w=12,h=10, dpi=700)
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_MHC-APOE.jpg",p4,
        w=12,h=10, dpi=700)
-## .3.1) Proportion of PCs out of total PRSs ----
+## 3.1) Proportion of PCs out of total PRSs ----
 
 # Reading all PC results and combining them
 
@@ -951,7 +971,7 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 ## 3.2) PC examples plots and their contributions ----
 
 # ALL:
-## PC1
+## PC1, alpha<5e-08
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="ALL",
                        alpha_val==5e-08,
@@ -992,16 +1012,18 @@ p1 <- ggplot(pc_cont_dat) +
                 annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC1 from $\\Pi_{ALL,5e-08}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
-## PC1 0.005
+# PC28, alpha<5e-08, ALL
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="ALL",
-                       alpha_val==0.005,
-                       pc_name=="PC1")
+                       alpha_val==5e-08,
+                       grepl("LOAD",PC_contributors)) %>%
+                filter(pc_name==paste0("PC",min(as.numeric(substring(pc_name,3)))))
 
 contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
 pheno <- gsub("pr ","",gsub("cabg","",
                             gsub("medadj","",
                                  tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
+pheno[which(grepl("LOAD",contributors))] <- "LOAD"
 conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
 pc_cont_dat <- data.frame(pheno,conts) %>%
                 rbind(.,c("other",100-sum(.$conts))) %>%
@@ -1030,13 +1052,14 @@ p2 <- ggplot(pc_cont_dat) +
                       legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
                                                  size=10, face="bold"),
                       legend.text.align = 0)+
-                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC1 from $\\Pi_{ALL,0.005}$"),colour = "black",size=6) +
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC28 from $\\Pi_{ALL,5e-08}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
-## PC1 0.05
+
+## PC1 0.001, ALL
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="ALL",
-                       alpha_val==0.05,
+                       alpha_val==0.001,
                        pc_name=="PC1")
 
 contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
@@ -1071,20 +1094,60 @@ p3 <- ggplot(pc_cont_dat) +
                       legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
                                                  size=10, face="bold"),
                       legend.text.align = 0)+
-                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC1 from $\\Pi_{ALL,0.05}$"),colour = "black",size=6) +
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC1 from $\\Pi_{ALL,0.001}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
-# PC5
+## PC1 0.001, MHC-
 pc_cont_dat <- pc_info_dat %>% 
-                filter(genome=="ALL",
-                       alpha_val==5e-08,
-                       pc_name=="PC5")
+                filter(genome=="MHC-",
+                       alpha_val==0.001,
+                       pc_name=="PC1")
 
 contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
 pheno <- gsub("pr ","",gsub("cabg","",
                             gsub("medadj","",
                                  tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
-pheno[12] <- "IGAP LOAD"
+conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
+pc_cont_dat <- data.frame(pheno,conts) %>%
+                rbind(.,c("other",100-sum(.$conts))) %>%
+                mutate(conts=signif(as.numeric(conts),2),
+                       cont=ceiling(as.numeric(conts)),
+                       pheno=paste0(pheno," (",conts,"%)"))
+
+p4 <- ggplot(pc_cont_dat) + 
+                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
+                                    fill = pheno), # --> phenotype
+                                color = "white") +
+                scale_fill_manual(name="PRSs",
+                                  values = get_palette(palette = "Set2", 21),
+                                  labels = pc_cont_dat$pheno) +
+                coord_fixed() + 
+                theme_void() +
+                theme(title = element_text(size = 18),
+                      plot.title = element_text(hjust = 0.5),
+                      plot.subtitle = element_text(hjust = 0.5),
+                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
+                      legend.position = 'bottom',
+                      legend.direction = "horizontal",
+                      legend.spacing.y = unit(0.05,"cm"),
+                      legend.spacing.x = unit(0.05,"cm"),
+                      legend.key.size = unit(0.95, 'lines'),
+                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
+                                                 size=10, face="bold"),
+                      legend.text.align = 0)+
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC1 from $\\Pi_{MHC-,0.001}$"),colour = "black",size=6) +
+                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
+
+# PC2, alpha<0.001, ALL
+pc_cont_dat <- pc_info_dat %>% 
+                filter(genome=="ALL",
+                       alpha_val==0.001,
+                       pc_name=="PC2")
+
+contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
+pheno <- gsub("pr ","",gsub("cabg","",
+                            gsub("medadj","",
+                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
 conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
 pc_cont_dat <- data.frame(pheno,conts) %>%
                 rbind(.,c("other",100-sum(.$conts))) %>%
@@ -1113,78 +1176,19 @@ p5 <- ggplot(pc_cont_dat) +
                       legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
                                                  size=10, face="bold"),
                       legend.text.align = 0)+
-                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC5 from $\\Pi_{ALL,5e-08}$"),colour = "black",size=6) +
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC2 from $\\Pi_{ALL,0.001}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
-
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_5e-08_ALL.jpg",
-       p1,
-       w=10,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.005_ALL.jpg",
-       p2,
-       w=10,h=7, dpi=400)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.05_ALL.jpg",
-       p3,
-       w=10,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC5_5e-08_ALL.jpg",
-       p5,
-       w=10,h=7, dpi=400) 
-
-## MHC-
-
-## PC6 1e-05
+# PC2, alpha<0.001, MHC-
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="MHC-",
-                       alpha_val==1e-05,
-                       pc_name=="PC6")
+                       alpha_val==0.001,
+                       pc_name=="PC2")
 
 contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
 pheno <- gsub("pr ","",gsub("cabg","",
                             gsub("medadj","",
                                  tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
-pheno[5] <- "IGAP LOAD"
-conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
-pc_cont_dat <- data.frame(pheno,conts) %>%
-                rbind(.,c("other",100-sum(.$conts))) %>%
-                mutate(conts=signif(as.numeric(conts),2),
-                       cont=ceiling(as.numeric(conts)),
-                       pheno=paste0(pheno," (",conts,"%)"))
-
-p2 <- ggplot(pc_cont_dat) + 
-                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
-                                    fill = pheno), # --> phenotype
-                                color = "white") +
-                scale_fill_manual(name="PRSs",
-                                  values = get_palette(palette = "Set2", 21),
-                                  labels = pc_cont_dat$pheno) +
-                coord_fixed() + 
-                theme_void() +
-                theme(title = element_text(size = 18),
-                      plot.title = element_text(hjust = 0.5),
-                      plot.subtitle = element_text(hjust = 0.5),
-                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
-                      legend.position = 'bottom',
-                      legend.direction = "horizontal",
-                      legend.spacing.y = unit(0.05,"cm"),
-                      legend.spacing.x = unit(0.05,"cm"),
-                      legend.key.size = unit(0.95, 'lines'),
-                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
-                                                 size=10, face="bold"),
-                      legend.text.align = 0)+
-                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC6 from $\\Pi_{MHC-,1e-05}$"),colour = "black",size=6) +
-                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
-
-# PC6 5e-06
-pc_cont_dat <- pc_info_dat %>% 
-                filter(genome=="MHC-",
-                       alpha_val==5e-06,
-                       pc_name=="PC6")
-
-contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
-pheno <- gsub("pr ","",gsub("cabg","",
-                            gsub("medadj","",
-                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
-pheno[5] <- "IGAP LOAD"
 conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
 pc_cont_dat <- data.frame(pheno,conts) %>%
                 rbind(.,c("other",100-sum(.$conts))) %>%
@@ -1213,21 +1217,123 @@ p6 <- ggplot(pc_cont_dat) +
                       legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
                                                  size=10, face="bold"),
                       legend.text.align = 0)+
-                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC6 from $\\Pi_{MHC-,5e-06}$"),colour = "black",size=6) +
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC2 from $\\Pi_{MHC-,0.001}$"),colour = "black",size=6) +
+                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
+
+# PC9, alpha<1e-07, ALL
+pc_cont_dat <- pc_info_dat %>% 
+                filter(genome=="ALL",
+                       alpha_val==1e-07,
+                       grepl("LOAD",PC_contributors)) %>%
+                filter(pc_name==paste0("PC",min(as.numeric(substring(pc_name,3)))))
+
+contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
+pheno <- gsub("pr ","",gsub("cabg","",
+                            gsub("medadj","",
+                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
+pheno[which(grepl("LOAD",contributors))] <- "LOAD"
+conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
+pc_cont_dat <- data.frame(pheno,conts) %>%
+                rbind(.,c("other",100-sum(.$conts))) %>%
+                mutate(conts=signif(as.numeric(conts),2),
+                       cont=ceiling(as.numeric(conts)),
+                       pheno=paste0(pheno," (",conts,"%)"))
+
+p7 <- ggplot(pc_cont_dat) + 
+                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
+                                    fill = pheno), # --> phenotype
+                                color = "white") +
+                scale_fill_manual(name="PRSs",
+                                  values = get_palette(palette = "Set2", 21),
+                                  labels = pc_cont_dat$pheno) +
+                coord_fixed() + 
+                theme_void() +
+                theme(title = element_text(size = 18),
+                      plot.title = element_text(hjust = 0.5),
+                      plot.subtitle = element_text(hjust = 0.5),
+                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
+                      legend.position = 'bottom',
+                      legend.direction = "horizontal",
+                      legend.spacing.y = unit(0.05,"cm"),
+                      legend.spacing.x = unit(0.05,"cm"),
+                      legend.key.size = unit(0.95, 'lines'),
+                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
+                                                 size=10, face="bold"),
+                      legend.text.align = 0)+
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC9 from $\\Pi_{ALL,1e-07}$"),colour = "black",size=6) +
+                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
+
+# PC12, alpha<1e-05, ALL
+pc_cont_dat <- pc_info_dat %>% 
+                filter(genome=="ALL",
+                       alpha_val==1e-05,
+                       grepl("LOAD",PC_contributors)) %>%
+                filter(pc_name==paste0("PC",min(as.numeric(substring(pc_name,3)))))
+
+contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
+pheno <- gsub("pr ","",gsub("cabg","",
+                            gsub("medadj","",
+                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
+pheno[which(grepl("LOAD",contributors))] <- "LOAD"
+conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
+pc_cont_dat <- data.frame(pheno,conts) %>%
+                rbind(.,c("other",100-sum(.$conts))) %>%
+                mutate(conts=signif(as.numeric(conts),2),
+                       cont=ceiling(as.numeric(conts)),
+                       pheno=paste0(pheno," (",conts,"%)"))
+
+p8 <- ggplot(pc_cont_dat) + 
+                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
+                                    fill = pheno), # --> phenotype
+                                color = "white") +
+                scale_fill_manual(name="PRSs",
+                                  values = get_palette(palette = "Set2", 21),
+                                  labels = pc_cont_dat$pheno) +
+                coord_fixed() + 
+                theme_void() +
+                theme(title = element_text(size = 18),
+                      plot.title = element_text(hjust = 0.5),
+                      plot.subtitle = element_text(hjust = 0.5),
+                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
+                      legend.position = 'bottom',
+                      legend.direction = "horizontal",
+                      legend.spacing.y = unit(0.05,"cm"),
+                      legend.spacing.x = unit(0.05,"cm"),
+                      legend.key.size = unit(0.95, 'lines'),
+                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
+                                                 size=10, face="bold"),
+                      legend.text.align = 0)+
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC12 from $\\Pi_{ALL,1e-05}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_MHC-.jpg",
-       p1,
-       w=10,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC6_1e-05_MHC-.jpg",
-       p2,
-       w=10,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC6_5e-06_MHC-.jpg",
-       p6,
-       w=10,h=7, dpi=400) 
 
-# .4) WGCNA power analysis plots ----
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_5e-08_ALL.jpg",
+       p1,
+       w=11,h=7, dpi=400) 
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC9_5e-08_ALL.jpg",
+       p2,
+       w=11,h=7, dpi=400)
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_ALL.jpg",
+       p3,
+       w=11,h=7, dpi=400) 
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_MHC-.jpg",
+       p4,
+       w=11,h=7, dpi=400) 
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_ALL.jpg",
+       p5,
+       w=11,h=7, dpi=400) 
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_MHC-.jpg",
+       p6,
+       w=11,h=7, dpi=400)
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC10_1e-05_MHC-.jpg",
+       p7,
+       w=11,h=7, dpi=400) 
+ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC6_1e-07_MHC-.jpg",
+       p8,
+       w=11,h=7, dpi=400) 
+
+# 4) WGCNA power analysis plots ----
 
 gg_dat <- list()
 for(GenoType in c("With_MHC_APOE","No_APOE","No_MHC","No_MHC_APOE")){
@@ -1294,7 +1400,7 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 #                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 #                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 #                 
-# .5) WGCNA module memberships/preservation ----
+# 5) WGCNA module memberships/preservation ----
 
 GenoType="With_MHC_APOE"
 path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
@@ -1311,7 +1417,7 @@ for(prs in names(wgcna_dat_results)){
                 # find AD scores
                 net <- wgcna_dat_results[[prs]]$net
                 # print(length(unique(net$colors)))
-                ad_col <- net$colors[grep("IGAP",names(net$colors))][1] #  vascular_implants|
+                ad_col <- net$colors[grep("LOAD",names(net$colors))][1] #  vascular_implants|
                 hub$LOAD <- as.numeric(hub$module == ad_col)
                 mostly_connected_phenos[[prs]]<-hub
                 # print(table(net$colors))
@@ -1335,7 +1441,7 @@ mostly_connected_phenos %<>%
                           hex=module,
                           order=length(alpha_value),
                           LOAD=LOAD) %>%
-                mutate(order=ifelse(grepl("IGAP|_AD|Alz|dement|Dement",hub),20,order))
+                mutate(order=ifelse(grepl("LOAD|_AD|Alz|dement|Dement",hub),20,order))
                 
 p1 <- ggplot(mostly_connected_phenos %>% filter(order!=1), 
        aes(y=reorder(hub,-order), 
@@ -1361,7 +1467,7 @@ p1 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                             "white"="lightgrey","lightcyan"="lightcyan3")) +
                 theme_bw() +
                 theme(axis.text.x = element_text(angle=90),
-                      axis.text.y = element_text(size=c(10,
+                      axis.text.y = element_text(size=c(7,
                                                         rep(7,150)),
                                                  angle=0,
                                                  face="bold"),
@@ -1387,7 +1493,7 @@ for(prs in names(wgcna_dat_results)){
                 # find AD scores
                 net <- wgcna_dat_results[[prs]]$net
                 # print(length(unique(net$colors)))
-                ad_col <- net$colors[grep("IGAP",names(net$colors))][1] #  vascular_implants|
+                ad_col <- net$colors[grep("LOAD",names(net$colors))][1] #  vascular_implants|
                 hub$LOAD <- as.numeric(hub$module == ad_col)
                 mostly_connected_phenos[[prs]]<-hub
                 # print(table(net$colors))
@@ -1411,7 +1517,7 @@ mostly_connected_phenos %<>%
                           hex=module,
                           order=length(alpha_value),
                           LOAD=LOAD) %>%
-                mutate(order=ifelse(grepl("IGAP|_AD|Alz|dement|Dement",hub),20,order))
+                mutate(order=ifelse(grepl("LOAD|_AD|Alz|dement|Dement",hub),20,order))
 
 p2 <- ggplot(mostly_connected_phenos %>% filter(order!=1), 
             aes(y=reorder(hub,-order), 
@@ -1437,7 +1543,7 @@ p2 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                 scale_shape_discrete(name=latex2exp::TeX("$\\PRS_{LOAD}$")) +
                 theme_bw() +
                 theme(axis.text.x = element_text(angle=90),
-                      axis.text.y = element_text(size=c(10,
+                      axis.text.y = element_text(size=c(7,
                                                         rep(7,150)),
                                                  angle=0,
                                                  face="bold"),
@@ -1462,7 +1568,7 @@ for(prs in names(wgcna_dat_results)){
                 # find AD scores
                 net <- wgcna_dat_results[[prs]]$net
                 # print(length(unique(net$colors)))
-                ad_col <- net$colors[grep("IGAP",names(net$colors))][1] #  vascular_implants|
+                ad_col <- net$colors[grep("LOAD",names(net$colors))][1] #  vascular_implants|
                 hub$LOAD <- as.numeric(hub$module == ad_col)
                 mostly_connected_phenos[[prs]]<-hub
                 # print(table(net$colors))
@@ -1486,7 +1592,7 @@ mostly_connected_phenos %<>%
                           hex=module,
                           order=length(alpha_value),
                           LOAD=LOAD) %>%
-                mutate(order=ifelse(grepl("IGAP|_AD|Alz|dement|Dement",hub),20,order))
+                mutate(order=ifelse(grepl("LOAD|_AD|Alz|dement|Dement",hub),20,order))
 
 p3 <- ggplot(mostly_connected_phenos %>% filter(order!=1), 
              aes(y=reorder(hub,-order), 
@@ -1538,7 +1644,7 @@ for(prs in names(wgcna_dat_results)){
                 # find AD scores
                 net <- wgcna_dat_results[[prs]]$net
                 # print(length(unique(net$colors)))
-                ad_col <- net$colors[grep("IGAP",names(net$colors))][1] #  vascular_implants|
+                ad_col <- net$colors[grep("LOAD",names(net$colors))][1] #  vascular_implants|
                 hub$LOAD <- as.numeric(hub$module == ad_col)
                 mostly_connected_phenos[[prs]]<-hub
                 # print(table(net$colors))
@@ -1562,7 +1668,7 @@ mostly_connected_phenos %<>%
                           hex=module,
                           order=length(alpha_value),
                           LOAD=LOAD) %>%
-                mutate(order=ifelse(grepl("IGAP|_AD|Alz|dement|Dement",hub),20,order))
+                mutate(order=ifelse(grepl("LOAD|_AD|Alz|dement|Dement",hub),20,order))
 
 p4 <- ggplot(mostly_connected_phenos %>% filter(order!=1), 
              aes(y=reorder(hub,-order), 
@@ -1752,7 +1858,7 @@ plotDendroAndColors(net$dendrograms[[1]],
                     main = latex2exp::TeX("Dendrogram and module colors from $\\Pi_{ALL,5e-06}$"))
 dev.off()
 
-# .6) WGCNA PC1 variation explained for each module ----
+# 6) WGCNA PC1 variation explained for each module ----
 
 genotype_lst <- NULL
 PVAL <- NULL
@@ -1872,7 +1978,7 @@ p1 <- ggplot(wgcna_pca_dat,
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_explained.jpg",p1,
        w=13,h=8, dpi=700)
 
-# .7) Module association results initial ----
+# 7) Module association results initial ----
 
 genotype_lst <- NULL
 PVAL <- NULL
@@ -1933,6 +2039,31 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
                 }
 }               
 
+# Adding if LOAD is present in each module
+dat_most_connected <- list()
+for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
+                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                mostly_connected_phenos <- list()
+                for(prs in names(wgcna_dat_results)){
+                                print(prs)
+                                # print(wgcna_dat_results[[prs]]$hubPRSbarplot)
+                                hub <- wgcna_dat_results[[prs]]$hub
+                                
+                                # find AD scores
+                                net <- wgcna_dat_results[[prs]]$net
+                                # print(length(unique(net$colors)))
+                                ad_col <- net$colors[grep("LOAD",names(net$colors))][1] #  vascular_implants|
+                                hub$LOAD <- as.numeric(hub$module == ad_col)
+                                mostly_connected_phenos[[prs]]<-hub
+                                # print(table(net$colors))
+                                # print(names(net$colors[which(net$colors==net$colors[grep("Alz|dement|IGAP|Dement|_AD",names(net$colors))][1])]))
+                }
+                
+                mostly_connected_phenos <- bind_rows(mostly_connected_phenos, .id = "PVAL")
+                dat_most_connected[[GenoType]] <- mostly_connected_phenos
+}
+dat_most_connected <- bind_rows(dat_most_connected, .id = "geno")
+
 wgcna_pca_dat <- data.frame(genotype_lst,
                             PVAL,
                             pheno,
@@ -1942,9 +2073,7 @@ wgcna_pca_dat <- data.frame(genotype_lst,
                             psigned_assoc,
                             pfdr_assoc,
                             beta,
-                            N)
-
-wgcna_pca_dat %<>%
+                            N) %>%
                 mutate(geno=genotype_lst,
                        genotype_lst=ifelse(genotype_lst=="No_APOE","APOE-",
                                            ifelse(genotype_lst=="No_MHC","MHC-",
@@ -1954,7 +2083,7 @@ wgcna_pca_dat %<>%
                        !Module %in% c("grey")) %>%
                 mutate(ModuleSize=(as.numeric(N))/max(as.numeric(N)),
                        effectsize=ifelse(beta<0,"Negative","Positive"),
-                       color=ifelse(pfdr_assoc<=0.05,Module,"lightgrey"),
+                       color=ifelse(pfdr_assoc<=0.05,Module,Module), # "lightgrey"
                        phenotype=pheno,
                        pheno=ifelse(pheno=="amyloid_sqrt","Total AB",
                                     ifelse(pheno=="cogdx","Final AD",
@@ -1962,15 +2091,19 @@ wgcna_pca_dat %<>%
                                                   ifelse(pheno=="cogn_globaln_lv","Global Last Visit",
                                                          "PHF tau")))),
                        hex = col2hex(color),
-                       color_apoe_=ifelse(pfdr_assoc!=1,Module,"lightgrey"))
-
+                       color_apoe_=ifelse(pval_assoc<0.05,Module,Module), # "lightgrey"
+                       hubs = gsub(" PR "," ",hubs)) %>% 
+                merge(.,data.frame(dat_most_connected), 
+                       by.x=c("geno","PVAL","Module"),
+                       by.y=c("geno","PVAL","module")) %>%
+                mutate(LOAD=ifelse(LOAD==1,"present","absent"))
 
 p1 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="ALL"), 
              aes(x=factor(PVAL,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
                                         "1e-06","5e-07","1e-07","5e-08")), 
                  y=abs(psigned_assoc),
-                 color=color)) + 
+                 color=color,shape=LOAD)) + 
                 geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() +
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~pheno, scale="free_y",ncol=1) +
@@ -2004,11 +2137,12 @@ p1 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="ALL"),
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
-                geom_text(aes(x = "0.1", y = -log10(0.003), 
-                              label = "p-value = 0.05"),
-                          color="tomato3") +
+                # geom_text(aes(x = "0.1", y = -log10(0.003), 
+                #               label = "p-value = 0.05"),
+                #           color="tomato3") +
                 geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="ALL"), 
                                       pfdr_assoc < 0.05),
+                                 fill = NA,
                           aes(label=paste(Module,"--",str_sub(tolower(hubs),4))),col="black",size=3,fontface="bold")
 
 p2 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="APOE-"), 
@@ -2016,7 +2150,7 @@ p2 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="APOE-"),
                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
                                         "1e-06","5e-07","1e-07","5e-08")), 
                  y=abs(psigned_assoc),
-                 color=color_apoe_)) + 
+                 color=color_apoe_,shape=LOAD)) + 
                 geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() +
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~pheno, scale="free_y",ncol=1) +
@@ -2046,13 +2180,16 @@ p2 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="APOE-"),
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
-                geom_text(aes(x = "0.1", y = -log10(0.03), 
-                              label = "p-value = 0.05"),
-                          color="tomato3") +
-                geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="APOE-"), 
-                                            pfdr_assoc !=1),
+                # geom_text(aes(x = "0.1", y = -log10(0.03), 
+                #               label = "p-value = 0.05"),
+                #           color="tomato3") +
+                geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="APOE-") %>% 
+                                                             group_by(genotype_lst,pheno) %>% 
+                                                             mutate(pfdr_assoc = ifelse(pfdr_assoc==min(pfdr_assoc),1,0)), 
+                                             pfdr_assoc == 1),
                                 aes(label=paste(Module,"--",str_sub(tolower(hubs),4))),
                                 col="black",
+                                fill = NA,
                                 size=3,fontface="bold",
                                 max.overlaps = Inf)
 p3 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"), 
@@ -2060,7 +2197,7 @@ p3 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"),
                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
                                         "1e-06","5e-07","1e-07","5e-08")), 
                  y=abs(psigned_assoc),
-                 color=color)) + 
+                 color=color,shape=LOAD)) + 
                 geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() +
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~pheno, scale="free_y",ncol=1) +
@@ -2090,11 +2227,12 @@ p3 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"),
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
-                geom_text(aes(x = "0.1", y = -log10(0.003), 
-                              label = "p-value = 0.05"),
-                          color="tomato3") +
+                # geom_text(aes(x = "0.1", y = -log10(0.003), 
+                #               label = "p-value = 0.05"),
+                #           color="tomato3") +
                 geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"), 
                                             pfdr_assoc < 0.05),
+                                 fill=NA,
                                 aes(label=paste(Module,"--",str_sub(tolower(hubs),4))),col="black",size=3,fontface="bold",
                                 max.overlaps=15)
 
@@ -2103,7 +2241,7 @@ p4 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-"),
                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
                                         "1e-06","5e-07","1e-07","5e-08")), 
                  y=abs(psigned_assoc),
-                 color=color_apoe_)) + 
+                 color=color_apoe_,shape=LOAD)) + 
                 geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() +
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~pheno, scale="free_y",ncol=1) +
@@ -2133,15 +2271,18 @@ p4 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-"),
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
-                geom_text(aes(x = "0.1", y = -log10(0.03), 
-                              label = "p-value = 0.05"),
-                          color="tomato3") +
-                geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-"), 
-                                            pfdr_assoc !=1),
+                # geom_text(aes(x = "0.1", y = -log10(0.03), 
+                #               label = "p-value = 0.05"),
+                #           color="tomato3") +
+                geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-") %>% 
+                                                             group_by(genotype_lst,pheno) %>% 
+                                                             mutate(pfdr_assoc = ifelse(pfdr_assoc==min(pfdr_assoc),1,0)), 
+                                             pfdr_assoc == 1),
+                                 fill = NA,
                                 aes(label=paste(Module,"--",str_sub(tolower(hubs),4))),col="black",size=3,fontface="bold")
 
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_ALL.jpg",p1,
-       w=11,h=9,units = "in", dpi=700)
+       w=9,h=11,units = "in", dpi=700)
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_APOE-.jpg",p2,
        w=9,h=11, dpi=700)
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-.jpg",p3,
@@ -2149,15 +2290,15 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-APOE-.jpg",p4,
        w=9,h=11, dpi=700)
 
-## 7.1) Detailed Association table ----
+## 7.1) Detailed Association data filter ----
 
 # filtering for adjusted p-value < 0.05
 aa <- wgcna_pca_dat %>% filter(pfdr_assoc<=0.05)
 table(aa$genotype_lst)
 # ALL  MHC- 
-# 28   33 
+# 25   26 
 
-### 7.1.1) If assoc results need an update, run this ----
+### 7.1.1) If assoc results need an update, run this (takes long) ----
 start = Sys.time()
 # OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_APOE")
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_MHC", dat=aa)
@@ -2170,7 +2311,7 @@ print(end-start)
 
 GenoType <- "With_MHC_APOE"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
-dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat.csv"))
+dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat6.csv"))
 dat2 <- merge(aa %>% filter(genotype_lst=="ALL"),dat1,
               by.x=c("PVAL","phenotype"),
               by.y=c("alpha_level","pheno")) %>%
@@ -2184,7 +2325,7 @@ dat2 <- merge(aa %>% filter(genotype_lst=="ALL"),dat1,
                               r2val_full, r2validated_full_CI_L, r2validated_base_CI_U,
                               r2_delta,
                               P_likelihood,
-                              n) %>% 
+                              n.y) %>% 
                 mutate(hubs=str_sub(hubs,4))
  
 write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)               
@@ -2205,7 +2346,7 @@ dat2 <- merge(aa %>% filter(genotype_lst=="MHC-"),dat1,
                               r2val_full, r2validated_full_CI_L, r2validated_base_CI_U,
                               r2_delta,
                               P_likelihood,
-                              n) %>% 
+                              n.y) %>% 
                 mutate(hubs=str_sub(hubs,4))
 
 write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)
@@ -2215,7 +2356,7 @@ write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)
 Genotype <- "With_MHC_APOE"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
-dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
+dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat6.csv"))
 # Selecting rows with q-value<0.05:
 dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
                 filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
@@ -2299,7 +2440,7 @@ ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg")
 Genotype <- "No_MHC"
 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
-dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
+dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat6.csv"))
 # Selecting rows with q-value<0.05:
 dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
                 filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%

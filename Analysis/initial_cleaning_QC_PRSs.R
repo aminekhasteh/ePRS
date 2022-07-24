@@ -24,7 +24,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                 batch_effect <- fread("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/batch_index.txt",col.names = c("IID","batch"))
                 ROSmaster <- merge(ROSmaster,batch_effect,by.x="IID",by.y="IID")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
                 geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
@@ -108,6 +108,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                                                                 low_snp_pheno <- sum(colnames(res) %in% pheno_failed)
                                                                 res <- res[,colnames(res)[which(!colnames(res) %in% pheno_failed)]]
                                                 } else {
+                                                                low_snp_pheno <- 0
                                                                 lowsnpcount.names <- NA
                                                                 res <- res
                                                 }
@@ -208,7 +209,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                                                multimodal=multimodal.names,
                                                highlycorrelated=check)
                                 
-                                row <- c(pval,PRS_dim,low_snp_pheno,length(multimodal),length(to_remove),dim(res.clean)[2])
+                                row <- c(pval,PRS_dim,low_snp_pheno,length(multimodal),length(to_remove),dim(res.clean)[2]-1)
                                 details <- rbind(details,row)
 
                 }

@@ -87,7 +87,7 @@ pca_association <- function(Study=c("ROSMAP","ADNI"),
                 # Reading ROS/MAP phenotype dataset
                 ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
                 geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
@@ -140,7 +140,7 @@ pca_association <- function(Study=c("ROSMAP","ADNI"),
                                                        b=bvalues,
                                                        p=pvalues,
                                                        n=nvalues,
-                                                       fdr=p.adjust(pvalues))
+                                                       fdr=p.adjust(pvalues,method="fdr"))
                                 
                                 assocres$colour <- ifelse(assocres$b < 0, "Negative effect","Positive effect")
                                 g <- ggplot(data=assocres, aes(x=pheno,y=-log10(p),group=pc))+
@@ -180,7 +180,7 @@ pca_heatmap_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                 # Reading ROS/MAP phenotype dataset
                 ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
                 geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
@@ -238,7 +238,7 @@ pca_assoc_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                 # Reading ROS/MAP phenotype dataset
                 ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
                 geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))

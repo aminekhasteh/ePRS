@@ -174,7 +174,7 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                                 ##### module - trait associations, monocytes & DLPFC
                                 ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                                 # Reading Filtered PNUKBB manifest
-                                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_EUR_h2_05_both_sex_selected_pheno_new_added_annotated.csv")
+                                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                                 # Changing Cogdx variable:
                                 ROSmaster$cogdx[which((ROSmaster$cogdx==2)|(ROSmaster$cogdx==3)|(ROSmaster$cogdx==5)|(ROSmaster$cogdx==6))] <- NA
                                 ROSmaster$cogdx[which((ROSmaster$cogdx==4))] <- 2
@@ -305,7 +305,7 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                                                       b=bvalues,
                                                       p=pvalues,
                                                       n=nvalues,
-                                                      allfdr=p.adjust(pvalues),
+                                                      allfdr=p.adjust(pvalues, method="fdr"),
                                                       signedp=-log10(pvalues)*sign(bvalues))
                                 
                                 #results <- subset(results, pheno %in% c("pathoAD","amyloid_sqrt","tangles_sqrt","cogn_global_at_lastvisit","cogn_global_slope"))
@@ -326,7 +326,7 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                                 ressub$modn <- moddefs$ngenes[match(ressub$egene,moddefs$module)]
                                 ressub$egene <- paste0(ressub$egene," (",ressub$modn,")")
                                 
-                                bonfT <- 0.05/nrow(ressub)
+                                # bonfT <- 0.05/nrow(ressub)
                                 rescast <- reshape2::dcast(ressub, pheno ~ egene,value.var = "signedp")
                                 
                                 rownames(rescast) <- rescast$pheno
@@ -369,10 +369,10 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                 saveRDS(wgcna_results_lst,file=paste0(path_to_save,"/wgcnaresults_all",".rds"))
 }
 
-WGCNA_dat_plot_GEN(sftpowers = c(4,2,1,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="With_MHC_APOE")
-WGCNA_dat_plot_GEN(sftpowers = c(9,4,4,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC")
-WGCNA_dat_plot_GEN(sftpowers = c(4,3,1,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="No_APOE")
-WGCNA_dat_plot_GEN(sftpowers = c(11,4,4,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC_APOE")
+WGCNA_dat_plot_GEN(sftpowers = c(3,2,17,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="With_MHC_APOE")
+WGCNA_dat_plot_GEN(sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC")
+WGCNA_dat_plot_GEN(sftpowers = c(4,2,3,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="No_APOE")
+WGCNA_dat_plot_GEN(sftpowers = c(10,4,1,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC_APOE")
 # 3) Module information ----
   # Getting module information (number of modules for each phenotype)
 PRSs <- NULL
