@@ -34,3 +34,21 @@ dat_filtered <- merge(dat_filtered,dat_manifest,by="aws_link_tabix")
 table(dat_filtered$phenotype_qc_EUR)
 
 write.csv(dat_filtered,paste0(path,"ukbb_manifest_filtered_phenos.csv"),row.names = F)
+
+# setting up Table S3 for manuscript
+dat_pheno <- read.csv(paste0(path,"ukbb_manifest_filtered_phenos.csv"))
+
+dat_pheno <- dat_pheno %>%
+                filter(to_remove!=1) %>%
+                select(phenocode,trait_type,description,description_more,coding_description,
+                       category,n_cases_full_cohort_both_sexes,
+                       n_cases_full_cohort_females,n_cases_full_cohort_males,
+                       n_cases_EUR,n_controls_EUR,saige_heritability_EUR,
+                       lambda_gc_EUR.x,aws_link,new_pheno_annot,ICD10_code) %>%
+                rename(lambda_gc_EUR=lambda_gc_EUR.x) %>%
+                mutate(phenotype_name=gsub("pr ","",gsub("cabg","",
+                                                         gsub("medadj","",
+                                                              tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", new_pheno_annot)),4))))))
+
+write.csv(dat_pheno,paste0(path,"Table_S3_ukbb_manifest_filtered_phenotypes.csv"),row.names = F)
+

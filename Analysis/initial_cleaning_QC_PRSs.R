@@ -19,20 +19,20 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                                    snp_count_n=5,
                                    cor_thresh =0.8) {
                 # Reading ROS/MAP phenotype dataset
-                ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                ROSmaster <- readRDS("../Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading batch effect data:
-                batch_effect <- fread("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/batch_index.txt",col.names = c("IID","batch"))
+                batch_effect <- fread("../Thesis_Project/Datasets/batch_index.txt",col.names = c("IID","batch"))
                 ROSmaster <- merge(ROSmaster,batch_effect,by.x="IID",by.y="IID")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+                meta_pheno <- read.csv("../Thesis_Project/Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
-                geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
+                geno_pcs <- read.table("../Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
 
                 # ----------------------------------------------------------- # Reading PRS matrices # ----------------------------------------------------------- #                                                                                       #|
 
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PRS/",GenoType)
-                path_to_save <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PRS/",GenoType)
+                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 
                 if(isTRUE(use_snp_count)){
                                 snp_count <- as.data.frame(fread(paste0(path,'/SNP_count/snp_count.txt'),header=T))

@@ -207,7 +207,7 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
                 dat_prs_dist <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/Resid_PRS/",input$Genotype)
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/Resid_PRS/",input$Genotype)
                                 dat <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                                 set.seed(input$slider1)
                                 i <- sample(1:nrow(as.matrix(dat[[input$Pval]]$residuals)),1)
@@ -218,7 +218,7 @@ server <- function(input, output) {
                                      xlab="",col=sample(1:40,1))
                 })
                 dat_hc <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/Resid_PRS/",input$Genotype) #
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/Resid_PRS/",input$Genotype) #
                                 dat <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                                 dat[[input$Pval]]$residuals$IID <- NULL
                                 par(mar=c(5,5,7,5),cex=1,font=3)
@@ -233,7 +233,7 @@ server <- function(input, output) {
                 })
                 
                 dat_pca <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
                                 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
                                 g <- ggplot(pc_info_dat, aes(reorder(alpha_val,as.numeric(alpha_val)), reorder(pc_name, -as.numeric(pc_vector)),
                                                              fill= as.numeric(pc_vector),
@@ -248,7 +248,7 @@ server <- function(input, output) {
                 })
                 
                 dat_pca_dist <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
                                 dat <- readRDS(paste0(path,"/PCA_results_all_p-vals.rds"))
                                 respca <- dat[[input$Pval]]$pc
                                 res.var <- get_pca_var(respca)
@@ -262,7 +262,7 @@ server <- function(input, output) {
                 })
                 
                 dat_pca_assoc <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
                                 assocres <- read.csv(paste0(path,"/assocres_pc_heatmap_dat.csv"))
                                 assocres_pheno <- assocres %>% filter(pheno==input$Phenotypes)
                                 assocres_pheno$index <- as.numeric(rownames(assocres_pheno))
@@ -297,7 +297,7 @@ server <- function(input, output) {
                 })
                 
                 dat_pca_compare_assoc <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/PCA/",input$Genotype)
                                 assocres <- read.csv(paste0(path,"/assocres_compare_pc_heatmap_dat.csv"))
                                 assocres_pheno <- assocres %>% filter(pheno==input$Phenotypes1) #"cogdx" input$Phenotypes1
                                 assocres_pheno$index <- as.numeric(rownames(assocres_pheno))
@@ -394,8 +394,8 @@ server <- function(input, output) {
                 })
                 
                 dat_wgcna_compare_assoc <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
-                                #path <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
+                                #path <- "../Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
                                 dat <- readRDS(paste0(path,"/wgcnaresults_all.rds"))
                                 g <- dat[[input$Pval1]]$associationheatmap
                                 g
@@ -403,8 +403,8 @@ server <- function(input, output) {
                 })
                 
                 dat_wgcna_hubs <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
-                                #path <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
+                                #path <- "../Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
                                 dat <- readRDS(paste0(path,"/wgcnaresults_all.rds"))
                                 g <- dat[[input$Pval1]]$hubPRSbarplot
                                 g
@@ -412,8 +412,8 @@ server <- function(input, output) {
                 })
                 
                 dat_wgcna_clustering <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
-                                #path <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
+                                #path <- "../Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
                                 dat <- readRDS(paste0(path,"/wgcnaresults_all.rds"))
                                 net <- dat[[input$Pval1]]$net
                                 plotDendroAndColors(net$dendrograms[[1]],
@@ -428,8 +428,8 @@ server <- function(input, output) {
                 })
                 
                 dat_wgcna_hubs_clustering <- reactive({
-                                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
-                                #path <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+                                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",input$Genotype)
+                                #path <- "../Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
                                 dat <- readRDS(paste0(path,"/wgcnaresults_all.rds"))
                                 net <- dat[[input$Pval1]]$net
                                 plot(hclust(dist(t(net$MEs))),xlab="",ylab="Colours")

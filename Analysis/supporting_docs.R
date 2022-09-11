@@ -22,7 +22,7 @@ library(rms)
 library(Hmisc)
 library(summarytools)
 library(factoextra)
-library(epicalc)
+# library(epicalc)
 library(lmtest)
 library(broom)
 library(ggpol)
@@ -66,11 +66,11 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                       Study=c("ROSMAP","ADNI"),
                                       GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
                 
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
-                ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Changing Cogdx variable:
                 ROSmaster$cogdx[which((ROSmaster$cogdx==2)|(ROSmaster$cogdx==3)|(ROSmaster$cogdx==5)|(ROSmaster$cogdx==6))] <- NA
                 ROSmaster$cogdx[which((ROSmaster$cogdx==4))] <- 2
@@ -308,10 +308,12 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
 GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")
 
 # Reading ROS/MAP phenotype dataset
-ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+ROSmaster1 <- readRDS("/Users/amin/Desktop/PLOS_Genetics/ROSmaster.rds")
+all.equal(ROSmaster,ROSmaster1)
 # We want to create some tables in understating the ROS/MAP participants
-prs <- fread("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PRS/No_APOE/p_val_0.0001.txt")
-geno_pcs <- read.table("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
+prs <- fread("../Datasets/CLUMP_500_0.2/ROSMAP/PRS/No_APOE/p_val_1.txt")
+geno_pcs <- read.table("../Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
 ROSmaster <- ROSmaster %>% merge(.,prs,by="IID") %>%
                 merge(.,geno_pcs,by="IID") %>%
@@ -319,51 +321,51 @@ ROSmaster <- ROSmaster %>% merge(.,prs,by="IID") %>%
 # IID %in% IIDs$x,
 ### Batch effect
 
-batch_effect <- fread("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/batch_index.txt",col.names = c("IID","batch"))
+batch_effect <- fread("../Datasets/batch_index.txt",col.names = c("IID","batch"))
 ROSmaster <- merge(ROSmaster,batch_effect,by.x="IID",by.y="IID")
 table(ROSmaster$batch)
 
-path_IIDs <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/"
+path_IIDs <- "../Datasets/"
 IIDs <- read.csv(paste0(path_IIDs,"IIDs.csv"))
 
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[1])
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[1])
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_noapoe <- list()
 for(alpha in names(prs)){
-                prs_noapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
+                prs_noapoe[[alpha]] <- prs[[alpha]]$residuals$LOAD        
 }
 prs_noapoe <- do.call(cbind.data.frame, prs_noapoe) %>%
                 rename_all(funs(paste0(.,"_noapoe"))) %>%
                 mutate(mean_noapoe = rowMeans(.),
                        IID = prs[[alpha]]$residuals$IID)
 
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[2])
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[2])
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_nomhc <- list()
 for(alpha in names(prs)){
-                prs_nomhc[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
+                prs_nomhc[[alpha]] <- prs[[alpha]]$residuals$LOAD        
 }
 prs_nomhc <- do.call(cbind.data.frame, prs_nomhc) %>%
                 rename_all(funs(paste0(.,"_nomhc"))) %>%
                 mutate(mean_nomhc = rowMeans(.),
                        IID = prs[[alpha]]$residuals$IID)
 
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[3])
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[3])
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_nomhcapoe <- list()
 for(alpha in names(prs)){
-                prs_nomhcapoe[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
+                prs_nomhcapoe[[alpha]] <- prs[[alpha]]$residuals$LOAD        
 }
 prs_nomhcapoe <- do.call(cbind.data.frame, prs_nomhcapoe)  %>%
                 rename_all(funs(paste0(.,"_nomhcapoe"))) %>%
                 mutate(mean_nomhcapoe = rowMeans(.),
                        IID = prs[[alpha]]$residuals$IID)
 
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[4])
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/",GenoType[4])
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 prs_all <- list()
 for(alpha in names(prs)){
-                prs_all[[alpha]] <- prs[[alpha]]$residuals$IGAP_LOAD        
+                prs_all[[alpha]] <- prs[[alpha]]$residuals$LOAD        
 }
 prs_all <- do.call(cbind.data.frame, prs_all) %>%
                 rename_all(funs(paste0(.,"_all"))) %>%
@@ -379,34 +381,67 @@ prs <- path <- alpha <- NULL
 
 ### dcfdx - Clinical cognitive diagnosis summary
 # cite:https://www.radc.rush.edu/docs/var/detail.htm?category=Clinical+Diagnosis&subcategory=Dementia&variable=dcfdx
-
 # Coding Detail
 # 1 NCI, No cognitive impairment (No impaired domains)
 # 2 MCI, Mild cognitive impairment (One impaired domain) and NO other cause of CI
 # 3 MCI, Mild cognitive impairment (One impaired domain) AND another cause of CI
 # 4 AD, Alzheimer's disease and NO other cause of CI (NINCDS PROB AD)
-# = cogdx
 # *5 AD, Alzheimer's disease AND another
 # *6 Other dementia. Other primary cause
-# variable = demlewy
-# Q: Dementia due to Lewy Body disease/Variant?
-#                 Coding Detail *1 Yes 2 No
-# blank N/A
-# cause of CI (NINCDS POSS AD) of dementia
 
-mean(ROSmaster$age_death,na.rm = T) # 88.98304
+### cogdx - Final Clinical Dx - Clinical Consensus Diagnosis
+# cite:https://www.radc.rush.edu/docs/var/detail.htm?category=Clinical+Diagnosis&subcategory=Final+consensus+diagnosis&variable=cogdx
+# Coding Detail
+# 1 NCI: No cognitive impairment (No impaired domains)
+# 2 MCI: Mild cognitive impairment (One impaired domain) and NO other cause of CI
+# 3 MCI, Mild cognitive impairment (One impaired domain) AND another cause of CI
+# 4 AD, Alzheimer's disease and NO other cause of CI (NINCDS PROB AD)
+# *5 AD, Alzheimer's disease AND another
+# *6 Other dementia. Other primary cause
+
+rosmap_dat <- ROSmaster %>% 
+                select(projid,IID,msex,
+                       age_bl,age_death,
+                       amyloid_sqrt,tangles_sqrt,pmi,
+                       cogdx,dcfdx_lv,niareagansc,educ,
+                       cogn_global_random_slope,cogn_globaln_lv) %>%
+                mutate(deceased=ifelse(is.na(age_death),0,1),
+                       LOAD_patho = ifelse(cogdx==4|cogdx==5,"AD",
+                                           ifelse(cogdx==1,"CN",
+                                                  ifelse(cogdx==2|cogdx==3,"MCI","Other"))),
+                       LOAD_clinical = ifelse(dcfdx_lv==4|dcfdx_lv==5,"AD",
+                                              ifelse(dcfdx_lv==1,"CN",
+                                                     ifelse(dcfdx_lv==2|dcfdx_lv==3,"MCI","Other"))),
+                       autopsied=ifelse(!is.na(amyloid_sqrt)&!is.na(tangles_sqrt),1,0))
+
+
+a1 <- subset(rosmap_dat,deceased==0)
+a2 <- subset(rosmap_dat,deceased==1 & ((is.na(amyloid_sqrt) & is.na(tangles_sqrt)) | is.na(pmi)))
+aa2 <- subset(a2,is.na(cogdx)) # 29 people don't have cogdx eventhough they are deceased
+a3 <- subset(rosmap_dat,(!is.na(amyloid_sqrt) | !is.na(tangles_sqrt)) & !is.na(pmi))
+aa3 <- subset(a3,is.na(cogdx)) # 7 people don't have cogdx eventhough they are deceased
+
+# adding 7 missing cogdx from a newer version of ROSMAP data:
+ROSmaster_new <- read.csv("../Datasets/ROSMAP_Phenotype/dataset_978_basic_01-13-2022.csv")
+ROSmaster_new1 <-  ROSmaster_new %>% filter(projid %in% aa2$projid) %>% select(projid,cogdx)
+a2$cogdx[match(ROSmaster_new1$projid,a2$projid)] <- ROSmaster_new1$cogdx
+# one person left, replacing cogdx with dcfdx_lv:
+a2$cogdx[which(is.na(a2$cogdx))] <- a2$dcfdx_lv[which(is.na(a2$cogdx))]
+
+ROSmaster_new2 <-  ROSmaster_new %>% filter(projid %in% aa3$projid) %>% select(projid,cogdx)
+a3$cogdx[match(ROSmaster_new2$projid,a3$projid)] <- ROSmaster_new2$cogdx
+
 
 # TABLE 1
-table1 <- ROSmaster %>% mutate(LOAD = ifelse(dcfdx_lv==4|dcfdx_lv==5,"AD",
+
+table1.a <- a1 %>% mutate(LOAD = ifelse(dcfdx_lv==4|dcfdx_lv==5,"AD",
                                              ifelse(dcfdx_lv==1,"CN",
-                                                    ifelse(dcfdx_lv==2|dcfdx_lv==3,"MCI","Other"))),
-                               deceased = ifelse(is.na(age_death),0,1)) %>%
+                                                    ifelse(dcfdx_lv==2|dcfdx_lv==3,"MCI","Other")))) %>%
                 merge(.,prs_noapoe,by="IID") %>%
                 merge(.,prs_nomhc,by="IID") %>%
                 merge(.,prs_nomhcapoe,by="IID") %>%
                 merge(.,prs_all,by="IID") %>%
-                # filter(!is.na(cogdx_new)) %>%
-                group_by(deceased,msex,LOAD) %>% 
+                group_by(LOAD) %>% 
                 summarise(n_sex=length(LOAD),
                           mean_age_death=mean(age_death,na.rm=T),
                           sd_age_death=sd(age_death, na.rm = T),
@@ -415,36 +450,52 @@ table1 <- ROSmaster %>% mutate(LOAD = ifelse(dcfdx_lv==4|dcfdx_lv==5,"AD",
                           sd_age_bl = sd(age_bl),
                           mean_education = mean(educ,na.rm=T),
                           sd_education = sd(educ,na.rm=T),
-                          PRS_noapoe_mean_all = mean(mean_noapoe),
-                          PRS_noapoe_sd_all = sd(mean_noapoe),
-                          PRS_noapoe_mean_5e08 = mean(`5e-08_noapoe`),
-                          PRS_noapoe_sd_5e08 = sd(`5e-08_noapoe`),
-                          PRS_nomhc_mean_all = mean(mean_nomhc),
-                          PRS_nomhc_sd_all = sd(mean_nomhc),
-                          PRS_nomhc_mean_5e08 = mean(`5e-08_nomhc`),
-                          PRS_nomhc_sd_5e08 = sd(`5e-08_nomhc`),
-                          PRS_nomhcapoe_mean_all = mean(mean_nomhcapoe),
-                          PRS_nomhcapoe_sd_all = sd(mean_nomhcapoe),
-                          PRS_nomhcapoe_mean_5e08 = mean(`5e-08_nomhcapoe`),
-                          PRS_nomhcapoe_sd_5e08 = sd(`5e-08_nomhcapoe`),
                           PRS_all_mean_all = mean(mean_all),
-                          PRS_all_sd_all = sd(mean_all),
-                          PRS_all_mean_5e08 = mean(`5e-08_all`),
-                          PRS_all_sd_5e08 = sd(`5e-08_all`)) 
+                          PRS_all_sd_all = sd(mean_all))
+
+table1.b <- rbind(a2,a3) %>% as.data.frame() %>%
+                mutate(LOAD = ifelse(cogdx==4|cogdx==5,"AD",
+                                     ifelse(cogdx==1,"CN",
+                                            ifelse(cogdx==2|cogdx==3,"MCI","Other"))),
+                                 deceased = ifelse(is.na(age_death),0,1)) %>%
+                merge(.,prs_noapoe,by="IID") %>%
+                merge(.,prs_nomhc,by="IID") %>%
+                merge(.,prs_nomhcapoe,by="IID") %>%
+                merge(.,prs_all,by="IID") %>%
+                # filter(!is.na(cogdx_new)) %>%
+                group_by(LOAD) %>% 
+                summarise(n_sex=length(LOAD),
+                          mean_age_death=mean(age_death,na.rm=T),
+                          sd_age_death=sd(age_death, na.rm = T),
+                          n_age_death = n(),
+                          mean_age_bl = mean(age_bl),
+                          sd_age_bl = sd(age_bl),
+                          mean_education = mean(educ,na.rm=T),
+                          sd_education = sd(educ,na.rm=T),
+                          pmi_mean = mean(pmi),
+                          pmi_sd = sd(pmi),
+                          PRS_all_mean_all = mean(mean_all),
+                          PRS_all_sd_all = sd(mean_all))
+
 # mutate(se = sd / sqrt(n),
 #        lower.ci = mean - qt(1 - (0.05 / 2), n - 1) * se,
 #        upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se)
 
-write.csv(table1,"/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis/Manuscript/Figures/Table1.csv",row.names = F)
-
+write.csv(as.data.frame(rbind(table1.a,table1.b)),"../Thesis/Manuscript/Figures/Table1a.csv",row.names = F)
+write.csv(aa,"../Thesis/Manuscript/Figures/Table1b.csv",row.names = F)
 
 ## 1.1) patho/cog variables distribution ----
 
 # Reading ROS/MAP phenotype dataset
-ROSmaster <- readRDS("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
 indepvec.pathology <- c("amyloid_sqrt","tangles_sqrt")
 indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv")
-dat <- ROSmaster %>% dplyr::select(indepvec.pathology,indepvec.cognition)
+
+path_IIDs <- "../Datasets/"
+IIDs <- read.csv(paste0(path_IIDs,"IIDs.csv"))
+
+dat <- ROSmaster %>% merge(.,IIDs,by.x="IID",by.y="x") %>%
+                dplyr::select(indepvec.pathology,indepvec.cognition)
 
 g1 <- ggplot(dat, aes(x=amyloid_sqrt)) + 
                 geom_histogram(color="#62906D", 
@@ -467,7 +518,7 @@ g3 <- ggplot(dat, aes(x=cogn_global_random_slope)) +
                                fill="#7a6c25") +
                 theme_classic() +
                 theme(plot.title = element_text(hjust = 0.5)) +
-                xlab("Random slope of global function") +
+                xlab("Random slope of global cognition") +
                 ylab("Frequency") 
 
 g4 <- ggplot(dat, aes(x=cogn_globaln_lv)) + 
@@ -475,18 +526,24 @@ g4 <- ggplot(dat, aes(x=cogn_globaln_lv)) +
                                fill="#B09E76") +
                 theme_classic() +
                 theme(plot.title = element_text(hjust = 0.5)) +
-                xlab("Random slope of global function (last visit)") +
+                xlab("Random slope of global cognition (last visit)") +
                 ylab("Frequency") 
 
-p <- plot_grid(g1, g2, g3, g4, labels=c('A', 'B','C','D'),nrow = 2)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/distribution_aging_patho_vars.jpg",p,
-       w=11,h=15, dpi=700)
+p0 <- plot_grid(g1, g2,g3,g4, labels=c('A','B','C','D'),ncol = 2)
+p <- plot_grid(g1, g2, labels=c('A','B'),ncol = 2)
+p1 <- plot_grid(g3, g4, labels=c('A','B'),ncol = 2)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/distribution_aging_patho_vars.jpg",p0,
+       w=11,h=14, dpi=200)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/distribution_patho_vars.jpg",p,
+       w=11,h=7, dpi=700)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/distribution_cog_vars.jpg",p1,
+       w=11,h=7, dpi=700)
 
 # 2) GWAS QC ----
-path_to_save <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PRS/"
+path_to_save <- "../Datasets/CLUMP_500_0.2/ROSMAP/PRS/"
 
 # Reading Filtered PNUKBB manifest
-meta_pheno <- read.csv("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+meta_pheno <- read.csv("../Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
 
 # GClambda_after_QC <- read.csv(paste0(path_to_save,"GClambda_ALL.txt"))
 # GClambda_after_QC$X <- NULL
@@ -591,7 +648,7 @@ g2 <- ggplot(b,
 
 p <- plot_grid(g1, g2, labels=c('A', 'B'),nrow = 2)
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/GWAS_GC_H2_compare.jpg",p,
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/GWAS_GC_H2_compare.jpg",p,
        w=8,h=10, dpi=500)
 # dat <- meta_pheno %>% dplyr::select(new_pheno_annot,
 #                                     lambda_gc_EUR,
@@ -638,7 +695,7 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 # 3) Principal Components plots (PCA) ----
 
 Genotype="With_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat <- pc_info_dat %>% mutate(color=ifelse(pc_vector>5,1,0))
 p1 <- ggplot(pc_info_dat, 
@@ -659,13 +716,13 @@ p1 <- ggplot(pc_info_dat,
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5)) +
                 geom_hline(yintercept = 1,linetype="dashed", color = "gray60") +
-                geom_hline(yintercept = 5,linetype="dashed", color = "black") +
+                # geom_hline(yintercept = 5,linetype="dashed", color = "black") +
                 # geom_text(aes(x = "1", y = 1.1, 
                 #               label = "1% of total variation explained"),
                 #           color="red") +
                 ggtitle(latex2exp::TeX("PCA results for $\\Pi_{ALL}$")) +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
-                     y = latex2exp::TeX("Total variation explained by each PC")) +
+                     y = latex2exp::TeX("Total (%) variation explained by each PC")) +
                 geom_label_repel(aes(factor(alpha_val,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                                                "5e-04","1e-04","5e-05","1e-05","5e-06",
                                                                "1e-06","5e-07","1e-07","5e-08")),
@@ -696,7 +753,7 @@ p1 <- ggplot(pc_info_dat,
 
 
 Genotype="No_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat <- pc_info_dat %>% mutate(color=ifelse(pc_vector>5,1,0))
 p2 <- ggplot(pc_info_dat, 
@@ -717,13 +774,13 @@ p2 <- ggplot(pc_info_dat,
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5)) +
                 geom_hline(yintercept = 1,linetype="dashed", color = "gray60") +
-                geom_hline(yintercept = 5,linetype="dashed", color = "black") +
+                # geom_hline(yintercept = 5,linetype="dashed", color = "black") +
                 # geom_text(aes(x = "1", y = 1.1, 
                 #               label = "1% of total variation explained"),
                 #           color="red") +
                 ggtitle(latex2exp::TeX("PCA results for $\\Pi_{APOE-}$")) +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
-                     y = latex2exp::TeX("Total variation explained by each PC")) +
+                     y = latex2exp::TeX("Total (%) variation explained by each PC")) +
                 geom_label_repel(aes(factor(alpha_val,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                                                "5e-04","1e-04","5e-05","1e-05","5e-06",
                                                                "1e-06","5e-07","1e-07","5e-08")),
@@ -753,7 +810,7 @@ p2 <- ggplot(pc_info_dat,
                                  fill=NA)
 
 Genotype="No_MHC"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat <- pc_info_dat %>% mutate(color=ifelse(pc_vector>5,1,0))
 p3 <- ggplot(pc_info_dat, 
@@ -774,19 +831,19 @@ p3 <- ggplot(pc_info_dat,
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5)) +
                 geom_hline(yintercept = 1,linetype="dashed", color = "gray60") +
-                geom_hline(yintercept = 5,linetype="dashed", color = "black") +
+                # geom_hline(yintercept = 5,linetype="dashed", color = "black") +
                 # geom_text(aes(x = "1", y = 1.1, 
                 #               label = "1% of total variation explained"),
                 #           color="red") +
                 ggtitle(latex2exp::TeX("PCA results for $\\Pi_{MHC-}$")) +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
-                     y = latex2exp::TeX("Total variation explained by each PC")) +
+                     y = latex2exp::TeX("Total (%) variation explained by each PC")) +
                 geom_label_repel(aes(factor(alpha_val,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                                                "5e-04","1e-04","5e-05","1e-05","5e-06",
                                                                "1e-06","5e-07","1e-07","5e-08")),
                                      label = paste(top_pc_explain_80,"PCs")),
                                  data = pc_info_dat %>% filter(pc_name=="PC20") %>% group_by(alpha_val) %>% sample_n(1),
-                                 y=2,
+                                 y=3,
                                  na.rm = TRUE,
                                  angle=45,
                                  col="deepskyblue3") +
@@ -810,7 +867,7 @@ p3 <- ggplot(pc_info_dat,
                                  fill=NA)
 
 Genotype="No_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat <- pc_info_dat %>% mutate(color=ifelse(pc_vector>5,1,0))
 p4 <- ggplot(pc_info_dat, 
@@ -831,19 +888,19 @@ p4 <- ggplot(pc_info_dat,
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5)) +
                 geom_hline(yintercept = 1,linetype="dashed", color = "gray60") +
-                geom_hline(yintercept = 5,linetype="dashed", color = "black") +
+                # geom_hline(yintercept = 5,linetype="dashed", color = "black") +
                 # geom_text(aes(x = "1", y = 1.1, 
                 #               label = "1% of total variation explained"),
                 #           color="red") +
-                ggtitle(latex2exp::TeX("PCA results for $\\Pi_{MHC-APOE-}$")) +
+                ggtitle(latex2exp::TeX("PCA results for $\\Pi_{MHC/APOE-}$")) +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
-                     y = latex2exp::TeX("Total variation explained by each PC")) +
+                     y = latex2exp::TeX("Total (%) variation explained by each PC")) +
                 geom_label_repel(aes(factor(alpha_val,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                                                "5e-04","1e-04","5e-05","1e-05","5e-06",
                                                                "1e-06","5e-07","1e-07","5e-08")),
                                      label = paste(top_pc_explain_80,"PCs")),
                                  data = pc_info_dat %>% filter(pc_name=="PC20") %>% group_by(alpha_val) %>% sample_n(1),
-                                 y=2,
+                                 y=3,
                                  na.rm = TRUE,
                                  angle=45,
                                  col="deepskyblue3") +
@@ -866,41 +923,43 @@ p4 <- ggplot(pc_info_dat,
                                  fontface="bold",
                                  fill=NA)
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_ALL.jpg",p1,
-       w=12,h=10, dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_APOE-.jpg",p2,
-       w=12,h=10, dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_MHC-.jpg",p3,
-       w=12,h=10, dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_MHC-APOE.jpg",p4,
-       w=12,h=10, dpi=700)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_ALL.jpg",p1,
+       w=12,h=13,dpi=200) #w=10,h=9
+ggsave("../Thesis/Presenations/Thesis_defence/PCA_results_ALL.jpg",p1,
+       w=15,h=9, dpi=200) # w=13,h=10,units = "in"
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_APOE-.jpg",p2,
+       w=12,h=13, dpi=200)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_MHC-.jpg",p3,
+       w=12,h=13, dpi=200)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PCA_results_MHC-APOE.jpg",p4,
+       w=12,h=13, dpi=200)
 ## 3.1) Proportion of PCs out of total PRSs ----
 
 # Reading all PC results and combining them
 
 Genotype="With_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat_ALL <- pc_info_dat %>% 
                 mutate(color=ifelse(pc_vector>5,1,0),
                        genome="ALL")
 
 Genotype="No_MHC"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat_MHC_ <- pc_info_dat %>% 
                 mutate(color=ifelse(pc_vector>5,1,0),
                        genome="MHC-")
 
 Genotype="No_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat_APOE_ <- pc_info_dat %>% 
                 mutate(color=ifelse(pc_vector>5,1,0),
                        genome="APOE-")
 
 Genotype="No_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
 pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
 pc_info_dat_MHC_APOE_ <- pc_info_dat %>% 
                 mutate(color=ifelse(pc_vector>5,1,0),
@@ -911,25 +970,25 @@ pc_info_dat <- rbind(pc_info_dat_ALL,pc_info_dat_MHC_,
 # Reading the dimension of each PRS matrix
 
 Genotype="With_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
 prs_info_dat <- read.csv(paste0(path,"/details.csv"))
 prs_info_dat_ALL <- prs_info_dat %>% 
                 mutate(genome="ALL")
 
 Genotype="No_MHC"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
 prs_info_dat <- read.csv(paste0(path,"/details.csv"))
 prs_info_dat_MHC_ <- prs_info_dat %>% 
                 mutate(genome="MHC-")
 
 Genotype="No_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
 prs_info_dat <- read.csv(paste0(path,"/details.csv"))
 prs_info_dat_APOE_ <- prs_info_dat %>% 
                 mutate(genome="APOE-")
 
 Genotype="No_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",Genotype)
 prs_info_dat <- read.csv(paste0(path,"/details.csv"))
 prs_info_dat_MHC_APOE_ <- prs_info_dat %>% 
                 mutate(genome="MHC-APOE-")
@@ -965,12 +1024,41 @@ p1 <- ggplot(pc_info_dat,aes(y=pc_prop,
                 ylab(latex2exp::TeX("Proportion of PCs out of number of included PRSs")) +
                 ggtitle("Number of PCs required to explain 80% of variance, divided by the number of PRSs in that matrix") +
                 theme(plot.title = element_text(hjust = 0.5))
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/pca_proportions_top_80.jpg",p1,
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/pca_proportions_top_80.jpg",p1,
        w=10,h=9, dpi=400)                
 
 ## 3.2) PC examples plots and their contributions ----
 
-# ALL:
+Genotype="With_MHC_APOE"
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
+pc_info_dat_ALL <- pc_info_dat %>% 
+                mutate(color=ifelse(pc_vector>5,1,0),
+                       genome="ALL")
+
+Genotype="No_MHC"
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
+pc_info_dat_MHC_ <- pc_info_dat %>% 
+                mutate(color=ifelse(pc_vector>5,1,0),
+                       genome="MHC-")
+
+Genotype="No_APOE"
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
+pc_info_dat_APOE_ <- pc_info_dat %>% 
+                mutate(color=ifelse(pc_vector>5,1,0),
+                       genome="APOE-")
+
+Genotype="No_MHC_APOE"
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",Genotype)
+pc_info_dat <- read.csv(paste0(path,"/pc_heatmap_dat.csv"))
+pc_info_dat_MHC_APOE_ <- pc_info_dat %>% 
+                mutate(color=ifelse(pc_vector>5,1,0),
+                       genome="MHC-APOE-")
+pc_info_dat <- rbind(pc_info_dat_ALL,pc_info_dat_MHC_,
+                     pc_info_dat_APOE_,pc_info_dat_MHC_APOE_)
+
 ## PC1, alpha<5e-08
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="ALL",
@@ -1263,7 +1351,7 @@ p7 <- ggplot(pc_cont_dat) +
                 annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC9 from $\\Pi_{ALL,1e-07}$"),colour = "black",size=6) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
-# PC12, alpha<1e-05, ALL
+# PC, alpha<1e-05, ALL
 pc_cont_dat <- pc_info_dat %>% 
                 filter(genome=="ALL",
                        alpha_val==1e-05,
@@ -1307,37 +1395,151 @@ p8 <- ggplot(pc_cont_dat) +
                 guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
 
 
+# PC10, alpha<1e-05, MHC-
+pc_cont_dat <- pc_info_dat %>% 
+                filter(genome=="MHC-",
+                       alpha_val==1e-05,
+                       pc_name=="PC10")
+                #        grepl("PC10",PC_contributors)) %>%
+                # filter(pc_name==paste0("PC",min(as.numeric(substring(pc_name,3)))))
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_5e-08_ALL.jpg",
+contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
+pheno <- gsub("pr ","",gsub("cabg","",
+                            gsub("medadj","",
+                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
+pheno[which(grepl("LOAD",contributors))] <- "LOAD"
+conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
+pc_cont_dat <- data.frame(pheno,conts) %>%
+                rbind(.,c("other",100-sum(.$conts))) %>%
+                mutate(conts=signif(as.numeric(conts),2),
+                       cont=ceiling(as.numeric(conts)),
+                       pheno=paste0(pheno," (",conts,"%)"))
+
+p9 <- ggplot(pc_cont_dat) + 
+                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
+                                    fill = pheno), # --> phenotype
+                                color = "white") +
+                scale_fill_manual(name="PRSs",
+                                  values = get_palette(palette = "Set2", 21),
+                                  labels = pc_cont_dat$pheno) +
+                coord_fixed() + 
+                theme_void() +
+                theme(title = element_text(size = 18),
+                      plot.title = element_text(hjust = 0.5),
+                      plot.subtitle = element_text(hjust = 0.5),
+                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
+                      legend.position = 'bottom',
+                      legend.direction = "horizontal",
+                      legend.spacing.y = unit(0.05,"cm"),
+                      legend.spacing.x = unit(0.05,"cm"),
+                      legend.key.size = unit(0.95, 'lines'),
+                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
+                                                 size=10, face="bold"),
+                      legend.text.align = 0)+
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC10 from $\\Pi_{MHC-,1e-05}$"),colour = "black",size=6) +
+                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
+
+
+# PC6, alpha<5e-07, MHC-
+pc_cont_dat <- pc_info_dat %>% 
+                filter(genome=="MHC-",
+                       alpha_val==5e-07,
+                       pc_name=="PC6")
+                #        grepl("LOAD",PC_contributors)) %>%
+                # filter(pc_name==paste0("PC",min(as.numeric(substring(pc_name,3)))))
+
+contributors <- unlist(strsplit(pc_cont_dat$PC_contributors, "\n"))
+pheno <- gsub("pr ","",gsub("cabg","",
+                            gsub("medadj","",
+                                 tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", contributors)),4)))))
+pheno[which(grepl("LOAD",contributors))] <- "LOAD"
+conts <- as.numeric(gsub("%","",as.vector(sub(".*Contribution: ", "", contributors))))
+pc_cont_dat <- data.frame(pheno,conts) %>%
+                rbind(.,c("other",100-sum(.$conts))) %>%
+                mutate(conts=signif(as.numeric(conts),2),
+                       cont=ceiling(as.numeric(conts)),
+                       pheno=paste0(pheno," (",conts,"%)"))
+
+p10 <- ggplot(pc_cont_dat) + 
+                geom_parliament(aes(seats = 10*cont, # -->% of contriutions (integer)
+                                    fill = pheno), # --> phenotype
+                                color = "white") +
+                scale_fill_manual(name="PRSs",
+                                  values = get_palette(palette = "Set2", 21),
+                                  labels = pc_cont_dat$pheno) +
+                coord_fixed() + 
+                theme_void() +
+                theme(title = element_text(size = 18),
+                      plot.title = element_text(hjust = 0.5),
+                      plot.subtitle = element_text(hjust = 0.5),
+                      plot.caption = element_text(vjust = -3,hjust = 0.9),    
+                      legend.position = 'bottom',
+                      legend.direction = "horizontal",
+                      legend.spacing.y = unit(0.05,"cm"),
+                      legend.spacing.x = unit(0.05,"cm"),
+                      legend.key.size = unit(0.95, 'lines'),
+                      legend.text = element_text(margin = margin(r = 1, unit = 'cm'),
+                                                 size=10, face="bold"),
+                      legend.text.align = 0)+
+                annotate("text", x = 0, y = 0.4, label = latex2exp::TeX("PC6 from $\\Pi_{MHC-,5e-07}$"),colour = "black",size=6) +
+                guides(fill=guide_legend(nrow=14,byrow=TRUE,reverse = FALSE,title=NULL))
+
+
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_5e-08_ALL.jpg",
        p1,
-       w=11,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC9_5e-08_ALL.jpg",
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC28_5e-08_ALL.jpg",
        p2,
-       w=11,h=7, dpi=400)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_ALL.jpg",
+       w=11,h=7, dpi=200)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_ALL.jpg",
        p3,
-       w=11,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_MHC-.jpg",
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC1_0.001_MHC-.jpg",
        p4,
-       w=11,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_ALL.jpg",
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_ALL.jpg",
        p5,
-       w=11,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_MHC-.jpg",
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC2_0.001_MHC-.jpg",
        p6,
-       w=11,h=7, dpi=400)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC10_1e-05_MHC-.jpg",
+       w=11,h=7, dpi=200)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC10_1e-05_MHC-.jpg",
        p7,
-       w=11,h=7, dpi=400) 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC6_1e-07_MHC-.jpg",
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC12_1e-05_ALL.jpg",
        p8,
-       w=11,h=7, dpi=400) 
+       w=11,h=7, dpi=200) 
 
-# 4) WGCNA power analysis plots ----
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC10_1e-05_MHC-.jpg",
+       p9,
+       w=11,h=7, dpi=200) 
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PCA/PC6_5e-07_MHC-.jpg",
+       p10,
+       w=11,h=7, dpi=200) 
+
+# 4) WGCNA (dendro example)----
+GenoType="With_MHC_APOE"
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
+net <- wgcna_dat_results$`5e-08`$net
+plotDendroAndColors(net$dendrograms[[1]],
+                    net$colors,
+                    "Dynamic Tree Cut",
+                    dendroLabels = FALSE,
+                    hang = 0,
+                    #addGuide = TRUE,
+                    guideHang = 0.05,
+                    main = latex2exp::TeX("PRS dendrogram and module colors from $\\Pi_{ALL,5e-08}$"))
+print("Plotting Dendrogram")
+pdf(paste0(path_wgcna,"/dendrogram_","5e-08_ALL",".pdf"),w=10,h=7)
+print(gplt_dendrogram)
+dev.off()
+
+## 4.1) WGCNA power analysis plots ----
 
 gg_dat <- list()
 for(GenoType in c("With_MHC_APOE","No_APOE","No_MHC","No_MHC_APOE")){
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
                 sft_pwr_dat <- readRDS(paste0(path,"/powerstudy_results.rds"))
                 
                 dftmp1 <- do.call("rbind", sft_pwr_dat)
@@ -1367,7 +1569,7 @@ p <- ggplot(gg_dat,aes(x=factor(alpha_value,levels=c("1","0.1","0.05","0.01","0.
                                  aes(label=as.character(power)),
                                  direction="both",
                                  max.overlaps=Inf,
-                                 size=5,
+                                 size=7,
                                  min.segment.length = 0, # removes the arrow
                                  fontface="bold") +
                 facet_wrap(~Genome_area,ncol=1) +
@@ -1380,8 +1582,8 @@ p <- ggplot(gg_dat,aes(x=factor(alpha_value,levels=c("1","0.1","0.05","0.01","0.
                 geom_vline(xintercept=seq(1.5, length(unique(dftmp3$alpha_value))-0.5, 1), 
                            linetype="dotted", colour="grey28")
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/power_analysis_ALL.jpg",p,
-       w=13,h=12, dpi=400)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/power_analysis_ALL.jpg",p,
+       w=9.5,h=10, dpi=150)
 
 ##### all analysis:
 
@@ -1394,17 +1596,17 @@ ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Projec
 # Study="ROSMAP"
 # 
 # for(GenoType in c("With_MHC_APOE","No_MHC","No_APOE","No_MHC_APOE")){
-#                 path_to_save <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Thesis/Manuscript/Figures"
-#                 path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-#                 path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+#                 path_to_save <- "../Thesis/Manuscript/Figures"
+#                 path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+#                 path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 #                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 #                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 #                 
-# 5) WGCNA module memberships/preservation ----
+# 5) WGCNA module preservation ----
 
 GenoType="With_MHC_APOE"
-path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 
@@ -1459,7 +1661,7 @@ p1 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                             "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
                                             "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
                                             "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
-                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow","floralwhite"="floralwhite","thistle1"="thistle1",
+                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
                                             "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
                                             "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
                                             "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
@@ -1479,8 +1681,8 @@ p1 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
 
 
 GenoType="No_MHC"
-path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 
@@ -1532,7 +1734,7 @@ p2 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                             "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
                                             "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
                                             "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
-                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow","floralwhite"="floralwhite","thistle1"="thistle1",
+                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
                                             "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
                                             "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
                                             "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
@@ -1554,8 +1756,8 @@ p2 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                 ylab("")                
 
 GenoType="No_APOE"
-path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 
@@ -1607,7 +1809,7 @@ p3 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                             "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
                                             "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
                                             "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
-                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow","floralwhite"="floralwhite","thistle1"="thistle1",
+                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
                                             "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
                                             "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
                                             "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
@@ -1630,8 +1832,8 @@ p3 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
 
 
 GenoType="No_MHC_APOE"
-path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
 
@@ -1683,7 +1885,7 @@ p4 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                             "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
                                             "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
                                             "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
-                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow","floralwhite"="floralwhite","thistle1"="thistle1",
+                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
                                             "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
                                             "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
                                             "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
@@ -1700,22 +1902,35 @@ p4 <- ggplot(mostly_connected_phenos %>% filter(order!=1),
                                                  face="bold"),
                       plot.title = element_text(hjust = 0.5))+
                 guides(color = "none") +
-                ggtitle(latex2exp::TeX("Module preservation in $\\Pi_{MHC-APOE-}")) +
+                ggtitle(latex2exp::TeX("Module preservation in $\\Pi_{MHC/APOE-}")) +
                 xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
                 ylab("") 
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_ALL.jpg",
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_ALL.jpg",
        p1,
-       w=10,h=9.5, dpi=400)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_MHC-.jpg",
+       w=13,h=9, dpi=150)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_MHC-.jpg",
        p2,
-       w=10,h=9.5, dpi=400)   
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_APOE-.jpg",
+       w=13,h=9, dpi=150)   
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_APOE-.jpg",
        p3,
-       w=10,h=9.5, dpi=400)   
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_MHC-APOE-.jpg",
+       w=13,h=9, dpi=150)   
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_preservation_MHC-APOE-.jpg",
        p4,
-       w=10,h=9.5, dpi=400)   
+       w=13,h=9, dpi=150) 
+
+ggsave("../Thesis/Presenations/Thesis_defence/module_preservation_ALL.jpg",
+       p1,
+       w=16,h=8, dpi=150)
+ggsave("../Thesis/Presenations/Thesis_defence/module_preservation_MHC-.jpg",
+       p2,
+       w=16,h=8, dpi=150)   
+ggsave("../Thesis/Presenations/Thesis_defence/module_preservation_APOE-.jpg",
+       p3,
+       w=16,h=8, dpi=150)   
+ggsave("../Thesis/Presenations/Thesis_defence/module_preservation_MHC-APOE-.jpg",
+       p4,
+       w=16,h=8, dpi=150) 
 ## 5.1) WGCNA module preservation testing/heatmap ----
 
 modules <- c("weight ","asthma ",
@@ -1723,8 +1938,8 @@ modules <- c("weight ","asthma ",
              "rheumatoid arthritis ")
 selected_hubs <- list()
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 
@@ -1772,10 +1987,10 @@ dat <- bind_rows(selected_hubs, .id = "genotype") %>%
 
 PC_lst <- list()
 for(GenoType in unique(dat$genotype)){
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))   
                 tmp_dat <- dat %>% filter(genotype==GenoType)
                 for(alpha in unique(tmp_dat$alpha_value)){
@@ -1834,19 +2049,19 @@ for(module in modules){
                                 ggtitle(paste0("Hub PRS of ",module)) +
                                 geom_text(aes(Var2, Var1, label = value), 
                                           color = "black", size = 2.5)
-                ggsave(paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",
+                ggsave(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",
                               module,"_heatmap_preservation.jpg"),p,
-                       w=10,h=10, dpi=400)
+                       w=10,h=10, dpi=200)
 }
 
 ## 3.2) WGCNA denrogram examples
 GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")[4]
-path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 net <- wgcna_dat_results$`5e-06`$net
 
-jpeg(paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",
            "dendrogram_ALL_5e-06.jpg"),w=11,h=4,unit="in",res=400)
 plotDendroAndColors(net$dendrograms[[1]],
                     net$colors,
@@ -1870,10 +2085,10 @@ N <- NULL
 index <- 1
 Study <- "ROSMAP"
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE","No_MHC","No_MHC_APOE",
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))   
                 for(pthres in names(prs)[order(as.numeric(names(prs)),decreasing = F)]){
                                 for(color in names(table(wgcna_dat_results[[pthres]]$net$colors))){
@@ -1919,7 +2134,7 @@ fair_cols <- list("#38170B"="1",
                   "#252A52"="0.005",
                   "#38170B"="0.001",
                   "#BF1B0B"="0.0005",
-                  "#FFC465"="0.0001", 
+                  "#FFC465"="0.0001",
                   "#66ADE5"="5e-05",
                   "#252A52"="1e-05",
                   "#38170B"="5e-06",
@@ -1934,7 +2149,7 @@ wgcna_pca_dat %<>%
                 mutate(PC1=as.numeric(PC1),
                        genotype_lst=ifelse(genotype_lst=="No_APOE","APOE-",
                                            ifelse(genotype_lst=="No_MHC","MHC-",
-                                                  ifelse(genotype_lst=="No_MHC_APOE","MHC-APOE-",
+                                                  ifelse(genotype_lst=="No_MHC_APOE","MHC/APOE-",
                                                          "ALL")))) %>% 
                 filter(PVAL %in% c("1","0.1","0.05","0.01","0.005","0.001","0.0005","0.0001","5e-05","1e-05","5e-06","1e-06","5e-07","1e-07","5e-08"),
                        !Module %in% c("grey")) %>%
@@ -1946,8 +2161,8 @@ p1 <- ggplot(wgcna_pca_dat,
                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
                                         "1e-06","5e-07","1e-07","5e-08")), 
                  y=PC1,
-                 color=color)) + 
-                geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() +
+                 color=Module)) + 
+                geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() + aes(size=ModuleSize)
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~factor(genotype_lst,
                                    levels=c("ALL","MHC-","APOE-","MHC-APOE-")), scale="free_y",ncol=1) +
@@ -1955,28 +2170,50 @@ p1 <- ggplot(wgcna_pca_dat,
                 theme(plot.title = element_text(hjust = 0.5)) +
                 guides(color = "none") +
                 scale_size_continuous(name="Module Size",
-                                      range  = c(0,5),
-                                      limits = c(min(as.numeric(wgcna_pca_dat$ModuleSize)), max(as.numeric(wgcna_pca_dat$ModuleSize))), 
+                                      range  = c(2,11),
+                                      limits = c(min(as.numeric(wgcna_pca_dat$ModuleSize)), max(as.numeric(wgcna_pca_dat$ModuleSize))),
                                       breaks = c(min(as.numeric(wgcna_pca_dat$ModuleSize)),
                                                  mean(as.numeric(wgcna_pca_dat$ModuleSize)),
                                                  max(as.numeric(wgcna_pca_dat$ModuleSize))),
                                       labels = c(10,50,1200)) +
-                # scale_colour_manual(name="ModuleSize",
-                #                     values=c(min(as.numeric(wgcna_pca_dat$N)),
-                #                              median(as.numeric(wgcna_pca_dat$N)),
-                #                              max(as.numeric(wgcna_pca_dat$N)))) + 
+                scale_colour_manual(name="ModuleSize",
+                                    values=c(min(as.numeric(wgcna_pca_dat$N)),
+                                             median(as.numeric(wgcna_pca_dat$N)),
+                                             max(as.numeric(wgcna_pca_dat$N)))) +
                 ggtitle('Total variation explained by first PC amongst all Modules') +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = 'Percentage') +
-                stat_summary(
-                                fun.data = stat_box_data,
-                                geom = "text",
-                                hjust = 0.5,
-                                vjust = 0.9
-                )
+                # stat_summary(
+                #                 fun.data = stat_box_data,
+                #                 geom = "text",
+                #                 hjust = 0.5,
+                #                 vjust = 0.9
+                # ) +
+                scale_color_manual(values=c("cyan"="cyan","darkgreen"="darkgreen","orange"="orange","saddlebrown"="saddlebrown","sienna3"="sienna3",
+                                            "paleturquoise"="paleturquoise","darkolivegreen"="darkolivegreen","palevioletred3","royalblue"="royalblue","brown"="brown","darkred"="darkred",
+                                            "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
+                                            "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
+                                            "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
+                                            "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
+                                            "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
+                                            "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
+                                            "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
+                                            "mediumpurple3"="mediumpurple3","darkslateblue"="darkslateblue","thistle2"="thistle2","darkmagenta"="darkmagenta","lightpink4"="lightpink4","orangered4"="orangered4",
+                                            "white"="lightgrey","lightcyan"="lightcyan3"))+
+                geom_label_repel(data=subset(wgcna_pca_dat , 
+                                             PC1>60),
+                                 fill = NA,
+                                 aes(label=Module),
+                                 col="black",
+                                 size=3,fontface="bold",
+                                 max.overlaps = 60) +
+                geom_hline(yintercept = 60, linetype="dashed", color = "lightgrey")
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_explained.jpg",p1,
-       w=13,h=8, dpi=700)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_explained.jpg",p1,
+       w=9,h=11, dpi=200)
+
+ggsave("../Thesis/Presenations/Thesis_defence/ePRS_explained.jpg",p1,
+       w=14,h=8, dpi=200)
 
 # 7) Module association results initial ----
 
@@ -1993,10 +2230,10 @@ N <- NULL
 index <- 1
 Study <- "ROSMAP"
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE","No_MHC","No_MHC_APOE",
-                path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))   
                 
                 for(pthres in names(prs)[order(as.numeric(names(prs)),decreasing = F)]){
@@ -2042,7 +2279,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
 # Adding if LOAD is present in each module
 dat_most_connected <- list()
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
-                path_wgcna <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 mostly_connected_phenos <- list()
                 for(prs in names(wgcna_dat_results)){
                                 print(prs)
@@ -2267,7 +2504,7 @@ p4 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-"),
                                                  mean(as.numeric(wgcna_pca_dat$ModuleSize)),
                                                  max(as.numeric(wgcna_pca_dat$ModuleSize))),
                                       labels = c(10,50,1200)) +
-                ggtitle(latex2exp::TeX("Phenotype ~ $\\ePRS_{\\Pi_{MHC-APOE-}}\\ + Covariates")) +
+                ggtitle(latex2exp::TeX("Phenotype ~ $\\ePRS_{\\Pi_{MHC/APOE-}}\\ + Covariates")) +
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
@@ -2281,14 +2518,16 @@ p4 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-APOE-"),
                                  fill = NA,
                                 aes(label=paste(Module,"--",str_sub(tolower(hubs),4))),col="black",size=3,fontface="bold")
 
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_ALL.jpg",p1,
-       w=9,h=11,units = "in", dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_APOE-.jpg",p2,
-       w=9,h=11, dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-.jpg",p3,
-       w=9,h=11, dpi=700)
-ggsave("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-APOE-.jpg",p4,
-       w=9,h=11, dpi=700)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_ALL.jpg",p1,
+       w=9,h=12, dpi=150) # w=13,h=10,units = "in"
+ggsave("../Thesis/Presenations/Thesis_defence/ePRS_assoc_ALL.jpg",p1,
+       w=15,h=9, dpi=200) # w=13,h=10,units = "in"
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_APOE-.jpg",p2,
+       w=9,h=12, dpi=150)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-.jpg",p3,
+       w=9,h=12, dpi=150)
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_assoc_MHC-APOE-.jpg",p4,
+       w=9,h=12, dpi=150)
 
 ## 7.1) Detailed Association data filter ----
 
@@ -2310,7 +2549,7 @@ print(end-start)
 ### 7.1.2) assoc results with detailed table ----
 
 GenoType <- "With_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
 dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat6.csv"))
 dat2 <- merge(aa %>% filter(genotype_lst=="ALL"),dat1,
               by.x=c("PVAL","phenotype"),
@@ -2331,7 +2570,7 @@ dat2 <- merge(aa %>% filter(genotype_lst=="ALL"),dat1,
 write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)               
 
 GenoType <- "No_MHC"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
 dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat.csv"))
 dat2 <- merge(aa %>% filter(genotype_lst=="MHC-"),dat1,
               by.x=c("PVAL","phenotype"),
@@ -2354,9 +2593,9 @@ write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)
 ## 7.2) Modelling results with modules comparison plots ------
 
 Genotype <- "With_MHC_APOE"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
+path <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
-dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat6.csv"))
+dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
 # Selecting rows with q-value<0.05:
 dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
                 filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
@@ -2396,7 +2635,6 @@ dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
                                           "Base Model",
                                           "Full Model"))
 
-# if(dim(dat_gg)[1]==0){next}
 indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
 indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv") # Don't have this variable: "cogn_global_at_lastvisit"
 pathnames <- c("Final AD","Total AB","PHF tau")
@@ -2421,26 +2659,50 @@ ggplot(dat_gg,
                 theme_bw() + 
                 facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
                 theme(axis.text.x=element_text(angle = -45, hjust = 0))+
-                ylab(latex2exp::TeX("Model performance ($\\R^2,AUC$)")) + #  or $\\R^2$ $\\AUC$
+                ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
+                xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
+                ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{ALL}})+\\PRS_{LOAD}+Covariates$")) + 
+                theme(plot.title = element_text(hjust = 0.5)) +
+                geom_label(data = subset(dat_gg %>% mutate(significance=ifelse(P_likelihood<0.001,"***",
+                                                                        ifelse(P_likelihood<0.01,"**",
+                                                                               ifelse(P_likelihood<0.05,"*","")))),
+                                        Performance=="Base Model"),
+                           aes(label=significance),
+                           fill=NA,
+                           nudge_y=1.5)
+
+
+ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
+       width = 8, height = 10, dpi=200)
+ggsave(filename = paste0(path,"/full_association_analysis_AUC_manuscript_",Genotype,".jpg"), 
+       width = 12, height = 12, dpi=200)
+
+g1_presentation <- ggplot(dat_gg %>%filter(modulevalues=="pink"), 
+                          aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+                                                            "0.0005","0.0001","5e-05","1e-05","5e-06",
+                                                            "1e-06","5e-07","1e-07","5e-08")), 
+                              y=100*value, 
+                              fill=Performance)) + 
+                geom_bar(stat="identity", position=position_dodge()) +
+                # geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
+                #               position=position_dodge(.9)) +
+                scale_fill_brewer(palette="Paired") + 
+                theme_bw() + 
+                facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
+                theme(axis.text.x=element_text(angle = -45, hjust = 0))+
+                ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
                 xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
                 ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{ALL}})+\\PRS_{LOAD}+Covariates$")) + 
                 theme(plot.title = element_text(hjust = 0.5))
-# geom_text(aes(label=paste(100*value,"%")), vjust=1.6, 
-#           color="white",
-#           position = position_dodge(0.9), 
-#           size=1.6)
-# data = dat_gg %>% 
-# mutate(P_likelihood=ifelse(variable=="r2val_full",
-# "Likelihood Ratio Test P-value:",
-# P_likelihood)))
 
-ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
-       width = 8, height = 10, dpi=500) #width=12
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_association_analysis_","ALL",".jpg"), 
+       g1_presentation, width = 8, height = 10, dpi=200) #width=12
+
 
 Genotype <- "No_MHC"
-path <- paste0("/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
+path <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
-dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat6.csv"))
+dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
 # Selecting rows with q-value<0.05:
 dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
                 filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
@@ -2494,21 +2756,276 @@ cognames <- c("Global slope","Global last visit")
 
 ggplot(dat_gg, 
        aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
-                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
+                                         "0.0005","1e-04","5e-05","1e-05","5e-06",
                                          "1e-06","5e-07","1e-07","5e-08")), 
            y=100*value, 
            fill=Performance)) + 
                 geom_bar(stat="identity", position=position_dodge()) +
                 geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
                               position=position_dodge(.9)) +
+                scale_fill_brewer(palette="Paired") +
+                theme_bw() + 
+                facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
+                theme(axis.text.x=element_text(angle = -45, hjust = 0))+
+                ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
+                xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
+                ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{MHC-}})+\\PRS_{LOAD}+Covariates$")) + 
+                theme(plot.title = element_text(hjust = 0.5)) +
+                geom_label(data = subset(dat_gg %>% mutate(significance=ifelse(P_likelihood<0.001,"***",
+                                                                               ifelse(P_likelihood<0.01,"**",
+                                                                                      ifelse(P_likelihood<0.05,"*","")))),
+                                         Performance=="Base Model"),
+                           aes(label=significance),
+                           fill=NA,
+                           nudge_y=1)
+
+ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
+       width = 8, height = 10, dpi=200) #width=12
+
+g2_presentation <- ggplot(dat_gg %>% filter(modulevalues=="brown",alpha_level=="1e-06"), 
+                          aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+                                                            "0.0005","1e-04","5e-05","1e-05","5e-06",
+                                                            "1e-06","5e-07","1e-07","5e-08")), 
+                              y=100*value, 
+                              fill=Performance)) + 
+                geom_bar(stat="identity", position=position_dodge()) +
+                # geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
+                #               position=position_dodge(.9)) +
                 scale_fill_brewer(palette="Paired") + 
                 theme_bw() + 
                 facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
                 theme(axis.text.x=element_text(angle = -45, hjust = 0))+
-                ylab(latex2exp::TeX("Model performance ($\\R^2,AUC$)")) + #  or $\\R^2$ $\\AUC$
+                ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
                 xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
                 ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{MHC-}})+\\PRS_{LOAD}+Covariates$")) + 
                 theme(plot.title = element_text(hjust = 0.5))
 
-ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
-       width = 10, height = 8, dpi=500) #width=12
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_association_analysis_","MHC-",".jpg"), 
+       g2_presentation, width = 8, height = 10, dpi=200) #width=12
+
+### 7.2.1) Module membership plots ----
+# ALL,5e-08 (pink)
+pthresh="5e-08"
+
+path_wgcna <- "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+wgcna_dat <- readRDS(paste0(path_wgcna,"wgcnaresults_all.rds"))
+
+path_prs <- "../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/With_MHC_APOE/"
+prs_dat <- readRDS(paste0(path_prs,"Residual_results_all_p-vals.rds"))
+df <- prs_dat[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+kme <- signedKME(datExpr = df,
+                 datME = wgcna_dat[[pthresh]]$net$MEs)
+
+
+names <- names(wgcna_dat[[pthresh]]$net$colors[which(wgcna_dat[[pthresh]]$net$colors=="pink")])
+mod_selected <- kme %>% 
+                filter(row.names(kme)%in%names) %>% 
+                select(kMEpink) %>%
+                mutate(prs=row.names(.),
+                       hub=ifelse(prs=="LOAD","LOAD",gsub("cabg","",
+                                     gsub("medadj","",
+                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", prs)),4))))),
+                       hub=ifelse(grepl("covid",hub),"covid 19 ",
+                                  ifelse(grepl("smoking",hub),"smoking ",
+                                         ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                                hub))),
+                       hub=ifelse(grepl("BI_",prs),paste0(hub,"biomarker"),hub),
+                       hub=str_to_title(hub),
+                       cor=kMEpink)
+
+g1 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
+                geom_bar(width=0.5, stat = "identity",fill="pink") +
+                xlab("") +
+                ylab("Pearson Correlation") +
+                ggtitle("Pink Module Membership Correlation With Module PC (ePRS)") +
+                theme_bw() +
+                theme(plot.title = element_text(hjust = 0.5))+
+                coord_flip()
+
+# MHC-,1e-06 (brown)
+
+pthresh="1e-06"
+
+path_wgcna <- "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/No_MHC/"
+wgcna_dat <- readRDS(paste0(path_wgcna,"wgcnaresults_all.rds"))
+
+path_prs <- "../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/No_MHC/"
+prs_dat <- readRDS(paste0(path_prs,"Residual_results_all_p-vals.rds"))
+df <- prs_dat[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+kme <- signedKME(datExpr = df,
+                 datME = wgcna_dat[[pthresh]]$net$MEs)
+
+names <- names(wgcna_dat[[pthresh]]$net$colors[which(wgcna_dat[[pthresh]]$net$colors=="brown")])
+mod_selected <- kme %>% 
+                filter(row.names(kme)%in%names) %>% 
+                select(kMEbrown) %>%
+                mutate(prs=row.names(.),
+                       hub=ifelse(prs=="LOAD","LOAD",gsub("cabg","",
+                                                          gsub("medadj","",
+                                                               tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", prs)),4))))),
+                       hub=ifelse(grepl("covid",hub),"covid 19 ",
+                                  ifelse(grepl("smoking",hub),"smoking ",
+                                         ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                                hub))),
+                       hub=ifelse(grepl("BI_",prs),paste0(hub,"biomarker"),hub),
+                       hub=str_to_title(hub),
+                       cor=kMEbrown)
+
+g2 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
+                geom_bar(width=0.5, stat = "identity",fill="brown") +
+                xlab("") +
+                ylab("Pearson Correlation") +
+                ggtitle("Brown Module Membership Correlation With Module PC (ePRS)") +
+                theme_bw() +
+                theme(plot.title = element_text(hjust = 0.5))+
+                coord_flip()
+
+# ALL,5e-08 (pink)
+pthresh="1e-06"
+
+path_wgcna <- "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/"
+wgcna_dat <- readRDS(paste0(path_wgcna,"wgcnaresults_all.rds"))
+
+path_prs <- "../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/With_MHC_APOE/"
+prs_dat <- readRDS(paste0(path_prs,"Residual_results_all_p-vals.rds"))
+df <- prs_dat[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+kme <- signedKME(datExpr = df,
+                 datME = wgcna_dat[[pthresh]]$net$MEs)
+
+
+names <- names(wgcna_dat[[pthresh]]$net$colors[which(wgcna_dat[[pthresh]]$net$colors=="salmon")])
+mod_selected <- kme %>% 
+                filter(row.names(kme)%in%names) %>% 
+                select(kMEsalmon) %>%
+                mutate(prs=row.names(.),
+                       hub=ifelse(prs=="LOAD","LOAD",gsub("cabg","",
+                                                          gsub("medadj","",
+                                                               tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", prs)),4))))),
+                       hub=ifelse(grepl("covid",hub),"covid 19 ",
+                                  ifelse(grepl("smoking",hub),"smoking ",
+                                         ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                                hub))),
+                       hub=ifelse(grepl("BI_",prs),paste0(hub,"biomarker"),hub),
+                       hub=str_to_title(hub),
+                       cor=kMEsalmon)
+
+g3 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
+                geom_bar(width=0.5, stat = "identity",fill="salmon") +
+                xlab("") +
+                ylab("Pearson Correlation") +
+                ggtitle("Salmon Module Membership Correlation With Module PC (ePRS)") +
+                theme_bw() +
+                theme(plot.title = element_text(hjust = 0.5))+
+                coord_flip()
+
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_membership_pink_","ALL",".jpg"), 
+       g1, width = 12, height = 8, dpi=200) #width=12
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_membership_brown_","MHC-",".jpg"), 
+       g2, width = 12, height = 8, dpi=200) #width=12
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_membership_salmon_","ALL",".jpg"), 
+       g3, width = 12, height = 8, dpi=200) #width=12
+
+## 7.3) Module heritability relationship ----
+
+GenoType="With_MHC_APOE"
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+wgcna_dat <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
+prs_dat <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+meta_pheno <- read.csv("./Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+
+module_membership <- list()
+for(pthresh in names(wgcna_dat)){
+                df <- prs_dat[[pthresh]]$residuals
+                rownames(df) <- df$IID
+                df$IID <- NULL
+                
+                kme <- signedKME(datExpr = df,
+                                 datME = wgcna_dat[[pthresh]]$net$MEs)
+                kme$heritability <- meta_pheno$saige_heritability_EUR[match(row.names(kme),meta_pheno$new_pheno_annot)]
+                kme$heritability[which(row.names(kme)=="LOAD")] <- 0.03 # cite:https://academic.oup.com/braincomms/article/4/3/fcac125/6586746
+                modules <- list()
+                for(color in names(table(wgcna_dat[[pthresh]]$net$colors))){
+                                if(color=="grey"){next}
+                                names <- names(wgcna_dat[[pthresh]]$net$colors[which(wgcna_dat[[pthresh]]$net$colors==color)])
+                                mod <- kme %>% 
+                                                filter(row.names(kme)%in%names) %>% 
+                                                select(paste0("kME",color),heritability) %>%
+                                                mutate(prs=row.names(.),
+                                                       hub=ifelse(prs=="LOAD","LOAD",gsub("cabg","",
+                                                                                          gsub("medadj","",
+                                                                                               tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", prs)),4))))),
+                                                       hub=ifelse(grepl("covid",hub),"covid 19 ",
+                                                                  ifelse(grepl("smoking",hub),"smoking ",
+                                                                         ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                                                                hub))),
+                                                       hub=ifelse(grepl("BI_",prs),paste0(hub,"biomarker"),hub),
+                                                       hub=str_to_title(hub))
+                                names(mod)[1]<- "cor"
+                                row.names(mod) <- 1:dim(mod)[1]
+                                modules[[color]] <- mod
+                }
+                module_membership[[pthresh]] <- bind_rows(modules, .id = "color")
+}
+
+module_membership <- bind_rows(module_membership,.id="alpha_value") %>% select(-prs)
+jitter <- position_jitter(width = 0.1, height = 0.1)
+g <- ggplot(module_membership1 %>% 
+                       filter(alpha_value %in% 
+                                              c("5e-08","1e-07","5e-07",
+                                                "1e-06","5e-06","1e-05")) %>%
+                            na.omit(),
+       aes(x=color,
+           y=heritability,
+           
+           color=color)) +
+                # geom_violin() +
+                geom_quasirandom(method = "pseudorandom",
+                                 position = jitter) +
+                # geom_boxplot(width = 0.07) +
+                scale_color_manual(values=c("cyan"="cyan","darkgreen"="darkgreen","orange"="orange","saddlebrown"="saddlebrown","sienna3"="sienna3",
+                                                   "paleturquoise"="paleturquoise","darkolivegreen"="darkolivegreen","palevioletred3","royalblue"="royalblue","brown"="brown","darkred"="darkred",
+                                                   "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
+                                                   "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
+                                                   "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
+                                                   "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow","floralwhite"="floralwhite","thistle1"="thistle1",
+                                                   "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
+                                                   "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
+                                                   "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
+                                                   "mediumpurple3"="mediumpurple3","darkslateblue"="darkslateblue","thistle2"="thistle2","darkmagenta"="darkmagenta","lightpink4"="lightpink4","orangered4"="orangered4",
+                                                   "white"="lightgrey","lightcyan"="lightcyan3","lightgrey"="cornsilk3")) +
+                theme_bw() +
+                ylab("Saige Heritability Estimate") +
+                # xlab(latex2exp::TeX("$\\alpha$-value threshold")) + 
+                # theme(legend.position="bottom") +
+                theme(plot.title = element_text(hjust = 0.5)) +
+                ggtitle("Distribution of Heritability of the PRSs in Each Module") +
+                guides(color="none",) +
+                facet_wrap(.~alpha_value) +
+                theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                geom_label(data=module_membership %>% 
+                                           filter(alpha_value %in% c("0.05","0.1","1")) %>%
+                                                group_by(alpha_value,color) %>%
+                                                 summarise(color=color,
+                                                           alpha_value=alpha_value,
+                                                           heritability=mean(heritability)) %>%
+                                                 distinct(),
+                                 aes(label=color,x=alpha_value,y=heritability),
+                                 col="black",size=3.5,
+                                 fontface="bold",
+                                 fill=NA)
+                                
+                
+
+ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/heritability_selected_alpha_modules","ALL",".jpg"),
+       g, width = 14, height = 7, dpi=200) #width=12
+                
