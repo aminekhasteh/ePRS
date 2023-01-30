@@ -16,17 +16,17 @@ library(cowplot)
 library(gplots)
 library(ggdendro)
 library(ggraph)
-library(stringr)
 library(data.table)
 library(rms)
+library(stringr)
 library(Hmisc)
 library(summarytools)
 library(factoextra)
-# library(epicalc)
 library(lmtest)
 library(broom)
 library(ggpol)
 library(RColorBrewer) 
+library(qgraph)
 Study = "ROSMAP"
 
 # B) Functions ------
@@ -543,7 +543,7 @@ ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/distribution_cog_vars.jpg",p1,
 path_to_save <- "../Datasets/CLUMP_500_0.2/ROSMAP/PRS/"
 
 # Reading Filtered PNUKBB manifest
-meta_pheno <- read.csv("../Thesis_code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+meta_pheno <- read.csv("../ePRS/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
 
 # GClambda_after_QC <- read.csv(paste0(path_to_save,"GClambda_ALL.txt"))
 # GClambda_after_QC$X <- NULL
@@ -2866,9 +2866,14 @@ mod_selected <- kme %>%
                 filter(row.names(kme)%in%names) %>% 
                 select(kMEbrown) %>%
                 mutate(prs=row.names(.),
-                       hub=ifelse(prs=="LOAD","LOAD",gsub("cabg","",
-                                                          gsub("medadj","",
-                                                               tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", prs)),4))))),
+                       hub=ifelse(prs=="LOAD","LOAD",
+                                  gsub("cabg","",
+                                       gsub("medadj","",
+                                            tolower(
+                                              str_sub(
+                                                gsub("_"," ",
+                                                     sub("\\h0..*", "", 
+                                                         prs)),4))))),
                        hub=ifelse(grepl("covid",hub),"covid 19 ",
                                   ifelse(grepl("smoking",hub),"smoking ",
                                          ifelse(grepl("pr ",hub),str_sub(hub,4),
@@ -2933,6 +2938,105 @@ ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_membersh
        g2, width = 12, height = 8, dpi=200) #width=12
 ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_membership_salmon_","ALL",".jpg"), 
        g3, width = 12, height = 8, dpi=200) #width=12
+
+### 7.2.2) Module network plots ----
+# set random seed for reproducibility
+set.seed(12345)
+
+sftpowers = c(3,2,17,1,1,1,1,1,1,1,1,2,1,1,1)
+Study="ROSMAP"
+GenoType="With_MHC_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+prs_names <- names(prs)[order(as.numeric(names(prs)),decreasing = F)]
+
+i <- 1
+pthres <- prs_names[i]
+sftpower <- sftpowers[i]
+
+df <- prs[[pthres]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c("pink"))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^3.7))
+tiff(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/","testing.jpg"), 
+     width = 10, height = 10, units = 'in', res = 300)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75, 
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Pink Module From $\\Pi_{ALL,5 \\times 10^{-8}}\\."), side=1)
+dev.off()
+
 
 ## 7.3) Module heritability relationship ----
 
@@ -3024,8 +3128,7 @@ g <- ggplot(module_membership1 %>%
                                  fontface="bold",
                                  fill=NA)
                                 
-                
-
 ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/heritability_selected_alpha_modules","ALL",".jpg"),
        g, width = 14, height = 7, dpi=200) #width=12
+
                 
