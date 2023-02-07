@@ -2078,6 +2078,7 @@ dev.off()
 genotype_lst <- NULL
 PVAL <- NULL
 Module <- NULL
+hubs <- NULL
 PC1 <- NULL
 PC2 <- NULL
 PC_top_80 <- NULL
@@ -2112,6 +2113,33 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
                                                                                 break
                                                                 }
                                                 }
+                                                # Getting hub name for each module
+                                                if(color!="grey"){
+                                                  hub <- wgcna_dat_results[[pthres]]$hub %>% 
+                                                    dplyr::filter(module==color) %>% 
+                                                    .$hub %>% 
+                                                    as.character()
+                                                  hub <- ifelse(hub=="LOAD","LOAD",gsub("cabg","",
+                                                                                        gsub("medadj","",
+                                                                                             tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", hub)),4)))))
+                                                  hub <- ifelse(grepl("covid",hub),"covid 19 ",
+                                                                ifelse(grepl("smoking",hub),"smoking ",
+                                                                       ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                                                              hub)))
+                                                  hub <- ifelse(grepl("BI_",hub),paste0(hub,"biomarker"),hub)
+                                                  hub=str_to_title(hub)
+                                                  hub=ifelse(hub=="Load","LOAD",
+                                                             ifelse(hub=="Ldl Direct  ","LDL Direct",
+                                                                    ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                                                                           ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                                                                  ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                                                                         ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+                                                  
+                                                  
+                                                  hubs[index] <- hub
+                                                } else {
+                                                  hubs[index] <- "Grey Module"
+                                                }
                                                 genotype_lst[index] <- GenoType
                                                 PVAL[index] <- pthres
                                                 Module[index] <- color
@@ -2125,27 +2153,27 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
                 }
 }               
 
-wgcna_pca_dat <- as.data.frame(cbind(genotype_lst,PVAL,Module,PC1,PC2,PC_top_80,N))
+wgcna_pca_dat <- as.data.frame(cbind(genotype_lst,PVAL,Module,hubs,PC1,PC2,PC_top_80,N))
 
-fair_cols <- list("#38170B"="1",
-                  "#BF1B0B"="0.1",
-                  "#FFC465"="0.05",
-                  "#66ADE5"="0.01",
-                  "#252A52"="0.005",
-                  "#38170B"="0.001",
-                  "#BF1B0B"="0.0005",
-                  "#FFC465"="0.0001",
-                  "#66ADE5"="5e-05",
-                  "#252A52"="1e-05",
-                  "#38170B"="5e-06",
-                  "#BF1B0B"="1e-06",
-                  "#FFC465"="5e-07",
-                  "#66ADE5"="1e-07",
-                  "#252A52"="5e-08")
+# fair_cols <- list("#38170B"="1",
+#                   "#BF1B0B"="0.1",
+#                   "#FFC465"="0.05",
+#                   "#66ADE5"="0.01",
+#                   "#252A52"="0.005",
+#                   "#38170B"="0.001",
+#                   "#BF1B0B"="0.0005",
+#                   "#FFC465"="0.0001",
+#                   "#66ADE5"="5e-05",
+#                   "#252A52"="1e-05",
+#                   "#38170B"="5e-06",
+#                   "#BF1B0B"="1e-06",
+#                   "#FFC465"="5e-07",
+#                   "#66ADE5"="1e-07",
+#                   "#252A52"="5e-08")
 wgcna_pca_dat %<>% 
-                left_join(enframe(fair_cols) %>% unnest(value), 
-                          by = c('PVAL' = 'value')) %>% 
-                rename('color' = name) %>% 
+                # left_join(enframe(fair_cols) %>% unnest(value), 
+                #           by = c('PVAL' = 'value')) %>% 
+                # rename('color' = name) %>% 
                 mutate(PC1=as.numeric(PC1),
                        genotype_lst=ifelse(genotype_lst=="No_APOE","APOE-",
                                            ifelse(genotype_lst=="No_MHC","MHC-",
@@ -2201,13 +2229,16 @@ p1 <- ggplot(wgcna_pca_dat,
                                             "mediumpurple3"="mediumpurple3","darkslateblue"="darkslateblue","thistle2"="thistle2","darkmagenta"="darkmagenta","lightpink4"="lightpink4","orangered4"="orangered4",
                                             "white"="lightgrey","lightcyan"="lightcyan3"))+
                 geom_label_repel(data=subset(wgcna_pca_dat , 
-                                             PC1>60),
+                                             PC1>75),
                                  fill = NA,
-                                 aes(label=Module),
+                                 aes(label=paste0(Module," -- ",hubs)),
                                  col="black",
-                                 size=3,fontface="bold",
+                                 size=3,
+                                 fontface="bold",
                                  max.overlaps = 60) +
-                geom_hline(yintercept = 60, linetype="dashed", color = "lightgrey")
+                geom_hline(yintercept = 80, 
+                           linetype="dashed", 
+                           color = "lightgrey")
 
 ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ePRS_explained.jpg",p1,
        w=9,h=11, dpi=200)
@@ -2592,48 +2623,127 @@ write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)
 
 ## 7.2) Modelling results with modules comparison plots ------
 
+# Mapping module colours to their corresponding mostly connected PRS to the ePRS
+
+genotype_lst <- NULL
+alpha_level <- NULL
+modulevalues <- NULL
+hubs <- NULL
+index <- 1
+for(GenoType in c("No_MHC","With_MHC_APOE")){ #"No_APOE","No_MHC","No_MHC_APOE",
+  path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+  prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+  
+  path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+  wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))   
+  for(pthres in names(prs)[order(as.numeric(names(prs)),decreasing = F)]){
+    for(color in names(table(wgcna_dat_results[[pthres]]$net$colors))){
+      print(pthres)
+      df <- prs[[pthres]]$residuals
+      rownames(df) <- df$IID
+      df$IID <- NULL
+      prs_names <- names(wgcna_dat_results[[pthres]]$net$colors[wgcna_dat_results[[pthres]]$net$colors==color])
+      matrix <- df %>% dplyr::select(prs_names)
+      respca <- prcomp(matrix)
+      pc1_cont <- sum(summary(respca)$importance[2,1])*100
+      if(dim(matrix)[2]==1){
+        pc2_cont <- NA     
+      } else{
+        pc2_cont <- sum(summary(respca)$importance[2,2])*100    
+      }
+      
+      for(r in 1:dim(summary(respca)$importance)[2]){
+        if(sum(summary(respca)$importance[2,1:r])>0.80){
+          top_r_80_explained <- r
+          break
+        }
+      }
+      # Getting hub name for each module
+      if(color!="grey"){
+        hub <- wgcna_dat_results[[pthres]]$hub %>% 
+          dplyr::filter(module==color) %>% 
+          .$hub %>% 
+          as.character()
+        hub <- ifelse(hub=="LOAD","LOAD",gsub("cabg","",
+                                              gsub("medadj","",
+                                                   tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", hub)),4)))))
+        hub <- ifelse(grepl("covid",hub),"covid 19 ",
+                      ifelse(grepl("smoking",hub),"smoking ",
+                             ifelse(grepl("pr ",hub),str_sub(hub,4),
+                                    hub)))
+        hub <- ifelse(grepl("BI_",hub),paste0(hub,"biomarker"),hub)
+        hub=str_to_title(hub)
+        hub=ifelse(hub=="Load","LOAD",
+                   ifelse(hub=="Ldl Direct  "|hub=="Ldl Direct ","LDL Direct",
+                          ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                                 ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                        ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                               ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+        
+        
+        hubs[index] <- hub
+      } else {
+        hubs[index] <- "Grey Module"
+      }
+      genotype_lst[index] <- GenoType
+      alpha_level[index] <- pthres
+      modulevalues[index] <- paste0("ME",color)
+      index <- index+1
+      
+    }
+  }
+}               
+
+module_info_dat <- as.data.frame(cbind(genotype_lst,alpha_level,
+                                       modulevalues,hubs))
+
 Genotype <- "With_MHC_APOE"
 path <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
 dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
 # Selecting rows with q-value<0.05:
-dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
-                filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
-                dplyr::select(alpha_level,
-                              pheno,
-                              coeff_eigenPS,
-                              modulevalues,
-                              r2val_base,
-                              r2validated_base_CI_L,
-                              r2validated_base_CI_U,
-                              r2validated_full_CI_L,
-                              r2validated_full_CI_U,
-                              r2val_full,
-                              P_likelihood,
-                              n) %>%
-                mutate(coeff_eigenPS=signif(coeff_eigenPS,3),
-                       r2val_base=signif(r2val_base,3),
-                       r2val_full=signif(r2val_full,3),
-                       P_likelihood=signif(P_likelihood,3),
-                       r2validated_base_CI_L=signif(r2validated_base_CI_L,3),
-                       r2validated_base_CI_U=signif(r2validated_base_CI_U,3),
-                       r2validated_full_CI_L=signif(r2validated_full_CI_L,3),
-                       r2validated_full_CI_U=signif(r2validated_full_CI_U,3)) %>% 
-                reshape2::melt(.,measure.vars=c("r2val_base","r2val_full")) %>%
-                mutate(CI_U=ifelse(variable=="r2val_base",
-                                   r2validated_base_CI_U,
-                                   r2validated_full_CI_U),
-                       CI_L=ifelse(variable=="r2val_base",
-                                   r2validated_base_CI_L,
-                                   r2validated_full_CI_L)) %>%
-                dplyr::select(-r2validated_base_CI_L,
-                              -r2validated_base_CI_U,
-                              -r2validated_full_CI_L,
-                              -r2validated_full_CI_U) %>%
-                mutate(modulevalues = substring(modulevalues, 3,100),
-                       Performance=ifelse(variable=="r2val_base",
-                                          "Base Model",
-                                          "Full Model"))
+dat_gg <- module_info_dat %>%
+  filter(genotype_lst==Genotype) %>%
+  merge(.,dat,by=c("alpha_level","modulevalues")) %>%
+  filter(modulevalues!="MEgrey") %>%
+  filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
+  dplyr::select(alpha_level,
+                pheno,
+                hubs,
+                coeff_eigenPS,
+                modulevalues,
+                r2val_base,
+                r2validated_base_CI_L,
+                r2validated_base_CI_U,
+                r2validated_full_CI_L,
+                r2validated_full_CI_U,
+                r2val_full,
+                P_likelihood,
+                n) %>%
+  mutate(coeff_eigenPS=signif(coeff_eigenPS,3),
+         r2val_base=signif(r2val_base,3),
+         r2val_full=signif(r2val_full,3),
+         P_likelihood=signif(P_likelihood,3),
+         r2validated_base_CI_L=signif(r2validated_base_CI_L,3),
+         r2validated_base_CI_U=signif(r2validated_base_CI_U,3),
+         r2validated_full_CI_L=signif(r2validated_full_CI_L,3),
+         r2validated_full_CI_U=signif(r2validated_full_CI_U,3)) %>% 
+  reshape2::melt(.,measure.vars=c("r2val_base","r2val_full")) %>%
+  mutate(CI_U=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_U,
+                     r2validated_full_CI_U),
+         CI_L=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_L,
+                     r2validated_full_CI_L)) %>%
+  dplyr::select(-r2validated_base_CI_L,
+                -r2validated_base_CI_U,
+                -r2validated_full_CI_L,
+                -r2validated_full_CI_U) %>%
+  mutate(modulevalues = substring(modulevalues, 3,100),
+         Performance=ifelse(variable=="r2val_base",
+                            "Base Model",
+                            "Full Model"),
+         modulevalues = paste0(modulevalues,"--",hubs))
 
 indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
 indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv") # Don't have this variable: "cogn_global_at_lastvisit"
@@ -2673,7 +2783,7 @@ ggplot(dat_gg,
 
 
 ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
-       width = 8, height = 10, dpi=200)
+       width = 8, height = 8, dpi=200)
 ggsave(filename = paste0(path,"/full_association_analysis_AUC_manuscript_",Genotype,".jpg"), 
        width = 12, height = 12, dpi=200)
 
@@ -2704,43 +2814,48 @@ path <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",Genotype,"/") #
 
 dat <- read.csv(paste0(path,"assocres_compare_hub_heatmap_dat.csv"))
 # Selecting rows with q-value<0.05:
-dat_gg <- dat %>% filter(modulevalues!="MEgrey") %>%
-                filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
-                dplyr::select(alpha_level,
-                              pheno,
-                              coeff_eigenPS,
-                              modulevalues,
-                              r2val_base,
-                              r2validated_base_CI_L,
-                              r2validated_base_CI_U,
-                              r2validated_full_CI_L,
-                              r2validated_full_CI_U,
-                              r2val_full,
-                              P_likelihood,
-                              n) %>%
-                mutate(coeff_eigenPS=signif(coeff_eigenPS,3),
-                       r2val_base=signif(r2val_base,3),
-                       r2val_full=signif(r2val_full,3),
-                       P_likelihood=signif(P_likelihood,3),
-                       r2validated_base_CI_L=signif(r2validated_base_CI_L,3),
-                       r2validated_base_CI_U=signif(r2validated_base_CI_U,3),
-                       r2validated_full_CI_L=signif(r2validated_full_CI_L,3),
-                       r2validated_full_CI_U=signif(r2validated_full_CI_U,3)) %>% 
-                reshape2::melt(.,measure.vars=c("r2val_base","r2val_full")) %>%
-                mutate(CI_U=ifelse(variable=="r2val_base",
-                                   r2validated_base_CI_U,
-                                   r2validated_full_CI_U),
-                       CI_L=ifelse(variable=="r2val_base",
-                                   r2validated_base_CI_L,
-                                   r2validated_full_CI_L)) %>%
-                dplyr::select(-r2validated_base_CI_L,
-                              -r2validated_base_CI_U,
-                              -r2validated_full_CI_L,
-                              -r2validated_full_CI_U) %>%
-                mutate(modulevalues = substring(modulevalues, 3,100),
-                       Performance=ifelse(variable=="r2val_base",
-                                          "Base Model",
-                                          "Full Model"))
+dat_gg <- module_info_dat %>%
+  filter(genotype_lst==Genotype) %>%
+  merge(.,dat,by=c("alpha_level","modulevalues")) %>%
+  filter(modulevalues!="MEgrey") %>%
+  filter(p.adjust(P_likelihood,method = "fdr")<0.05) %>%
+  dplyr::select(alpha_level,
+                pheno,
+                hubs,
+                coeff_eigenPS,
+                modulevalues,
+                r2val_base,
+                r2validated_base_CI_L,
+                r2validated_base_CI_U,
+                r2validated_full_CI_L,
+                r2validated_full_CI_U,
+                r2val_full,
+                P_likelihood,
+                n) %>%
+  mutate(coeff_eigenPS=signif(coeff_eigenPS,3),
+         r2val_base=signif(r2val_base,3),
+         r2val_full=signif(r2val_full,3),
+         P_likelihood=signif(P_likelihood,3),
+         r2validated_base_CI_L=signif(r2validated_base_CI_L,3),
+         r2validated_base_CI_U=signif(r2validated_base_CI_U,3),
+         r2validated_full_CI_L=signif(r2validated_full_CI_L,3),
+         r2validated_full_CI_U=signif(r2validated_full_CI_U,3)) %>% 
+  reshape2::melt(.,measure.vars=c("r2val_base","r2val_full")) %>%
+  mutate(CI_U=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_U,
+                     r2validated_full_CI_U),
+         CI_L=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_L,
+                     r2validated_full_CI_L)) %>%
+  dplyr::select(-r2validated_base_CI_L,
+                -r2validated_base_CI_U,
+                -r2validated_full_CI_L,
+                -r2validated_full_CI_U) %>%
+  mutate(modulevalues = substring(modulevalues, 3,100),
+         Performance=ifelse(variable=="r2val_base",
+                            "Base Model",
+                            "Full Model"),
+         modulevalues = paste0(modulevalues,"--",hubs))
 
 # if(dim(dat_gg)[1]==0){next}
 indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
@@ -2803,7 +2918,7 @@ g2_presentation <- ggplot(dat_gg %>% filter(modulevalues=="brown",alpha_level=="
 ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_association_analysis_","MHC-",".jpg"), 
        g2_presentation, width = 8, height = 10, dpi=200) #width=12
 
-### 7.2.1) Module membership plots and member correlation to eigne PRS ----
+### 7.2.1) Module membership plots and member correlation to eigen PRSs ----
 # ALL,5e-08 (pink)
 pthresh="5e-08"
 
@@ -2839,14 +2954,14 @@ mod_selected <- kme %>%
                                   ifelse(hub=="Ldl Direct  ","LDL Direct",
                                          ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                                                 ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                                               ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub)))))))
 
 g1 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
                 geom_bar(width=0.5, stat = "identity",fill="pink") +
                 xlab("") +
                 ylab("Pearson Correlation") +
-                ggtitle("Pink Module Membership Correlation With Module PC (ePRS)") +
+                ggtitle("Pink Module Membership Correlation With ePRS") +
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5))+
                 coord_flip()
@@ -2891,14 +3006,14 @@ mod_selected <- kme %>%
                                   ifelse(hub=="Ldl Direct  ","LDL Direct",
                                          ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                                                 ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                                               ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub)))))))
 
 g2 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
                 geom_bar(width=0.5, stat = "identity",fill="red") +
                 xlab("") +
                 ylab("Pearson Correlation") +
-                ggtitle("Red Module Membership Correlation With Module PC (ePRS)") +
+                ggtitle("Red Module Membership Correlation With ePRS") +
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5))+
                 coord_flip()
@@ -2938,14 +3053,14 @@ mod_selected <- kme %>%
                                   ifelse(hub=="Ldl Direct  ","LDL Direct",
                                          ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                                                 ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                                       ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                                               ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub)))))))
 
 g3 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
                 geom_bar(width=0.5, stat = "identity",fill="red") +
                 xlab("") +
                 ylab("Pearson Correlation") +
-                ggtitle("Red Module Membership Correlation With Module PC (ePRS)") +
+                ggtitle("Red Module Membership Correlation With ePRS") +
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5))+
                 coord_flip()
@@ -2985,26 +3100,26 @@ mod_selected <- kme %>%
                     ifelse(hub=="Ldl Direct  ","LDL Direct",
                            ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                                   ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                         ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                         ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                                 ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub)))))))
 
 g4 <- ggplot(mod_selected,aes(x=reorder(hub,cor),y=cor)) +
   geom_bar(width=0.5, stat = "identity",fill="green") +
   xlab("") +
   ylab("Pearson Correlation") +
-  ggtitle("Green Module Membership Correlation With Module PC (ePRS)") +
+  ggtitle("Green Module Membership Correlation With ePRS") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))+
   coord_flip()
 
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/full_membership_pink_","ALL_5e-8",".jpg"), 
-       g1, width = 10, height = 10, dpi=200) #width=12
+       g1, width = 8, height = 4, dpi=200) #width=12
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/full_membership_red_","ALL_1e-07",".jpg"), 
-       g2, width = 10, height = 10, dpi=200) #width=12
+       g2, width = 8, height = 4, dpi=200) #width=12
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/full_membership_red_","MHC-_5e_07",".jpg"), 
-       g3, width = 10, height = 10, dpi=200) #width=12
+       g3, width = 8, height = 4, dpi=200) #width=12
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/full_membership_green_","MHC-_5e_08",".jpg"), 
-       g4, width = 10, height = 10, dpi=200) #width=12
+       g4, width = 8, height = 4, dpi=200) #width=12
 
 ### 7.2.2) Module network plots ----
 # In this section, we produce network plots of some interesting modules
@@ -3090,7 +3205,7 @@ hub=ifelse(hub=="Load","LOAD",
            ifelse(hub=="Ldl Direct  ","LDL Direct",
                   ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                          ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                        ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
 
 network <- set.vertex.attribute(network, "name", value=hub)
@@ -3103,10 +3218,10 @@ network1 <- delete.vertices(network, V(network)$color!=c(mod))
 e <- get.edgelist(network1,names=FALSE)
 l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
                                        area=8*(vcount(network1)^2),
-                                       repulse.rad=(vcount(network1)^3.7))
+                                       repulse.rad=(vcount(network1)^3.52))
 jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
             "_module_",pthresh,"_",GenoType,".jpg"), 
-     width = 10, height = 10, units = 'in', res = 200)
+     width = 8, height = 8, units = 'in', res = 200)
 plot(network1,layout=l,
      edge.width=E(network)$importance*5,
      edge.arrow.size=0.2, 
@@ -3192,7 +3307,7 @@ hub=ifelse(hub=="Load","LOAD",
            ifelse(hub=="Ldl Direct  ","LDL Direct",
                   ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
                          ifelse(hub=="Family History Ad Father ","Family History AD Father",
-                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
                                        ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
 
 network <- set.vertex.attribute(network, "name", value=hub)
@@ -3208,7 +3323,7 @@ l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
                                        repulse.rad=(vcount(network1)^4.22))
 jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
             "_module_",pthresh,"_",GenoType,".jpg"), 
-     width = 10, height = 10, units = 'in', res = 200)
+     width = 8, height = 8, units = 'in', res = 200)
 plot(network1,layout=l,
      edge.width=E(network)$importance*5,
      edge.arrow.size=0.2, 
@@ -3311,7 +3426,7 @@ l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
                                        repulse.rad=(vcount(network1)^2.8))
 jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
             "_module_",pthresh,"_",GenoType,".jpg"), 
-     width = 10, height = 10, units = 'in', res = 200)
+     width = 8, height = 8, units = 'in', res = 200)
 plot(network1,layout=l,
      edge.width=E(network)$importance*5,
      edge.arrow.size=0.2, 
@@ -3414,7 +3529,7 @@ l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
                                        repulse.rad=(vcount(network1)^2.5))
 jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
             "_module_",pthresh,"_",GenoType,".jpg"), 
-     width = 10, height = 10, units = 'in', res = 200)
+     width = 8, height = 8, units = 'in', res = 200)
 plot(network1,layout=l,
      edge.width=E(network)$importance*5,
      edge.arrow.size=0.2, 
@@ -3423,6 +3538,934 @@ plot(network1,layout=l,
      vertex.label.font=0.75,
      vertex.shape="circle")
 mtext(latex2exp::TeX("Network Plot Of The Green Module From $\\Pi_{MHC-,5 \\times 10^{-8}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(3,2,17,1,1,1,1,1,1,1,1,2,1,1,1)
+Study="ROSMAP"
+GenoType="With_MHC_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-07
+mod <- "yellow"
+i <- 3
+pthresh = "5e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75, 
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Yellow Module From $\\Pi_{ALL,5 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(3,2,17,1,1,1,1,1,1,1,1,2,1,1,1)
+Study="ROSMAP"
+GenoType="With_MHC_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-07
+mod <- "green"
+i <- 3
+pthresh = "5e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75, 
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Green Module From $\\Pi_{ALL,5 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-08
+mod <- "black"
+i <- 1
+pthresh = "5e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.color="red",
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Black Module From $\\Pi_{MHC-,5 \\times 10^{-8}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 1e-07
+mod <- "pink"
+i <- 2
+pthresh = "1e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Pink Module From $\\Pi_{MHC-,1 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 1e-07
+mod <- "magenta"
+i <- 2
+pthresh = "1e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Magenta Module From $\\Pi_{MHC-,1 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-07
+mod <- "greenyellow"
+i <- 3
+pthresh = "5e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Green Yellow Module From $\\Pi_{MHC-,5 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(4,2,3,1,1,1,1,1,1,1,1,2,1,1,1)
+Study="ROSMAP"
+GenoType="No_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-07
+mod <- "salmon"
+i <- 3
+pthresh = "5e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Salmon Module From $\\Pi_{APOE-,5 \\times 10^{-7}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(10,4,1,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 5e-08
+mod <- "green"
+i <- 1
+pthresh = "5e-08"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Green Module From $\\Pi_{MHC-APOE-,5 \\times 10^{-8}}\\."), side=1)
+dev.off()
+
+####
+# softpowers are found previously. Refer to WGCNA.R
+sftpowers = c(10,4,1,1,1,1,1,1,1,1,1,1,1,1,1)
+Study="ROSMAP"
+GenoType="No_MHC_APOE"
+
+path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+
+# alpha <= 1e-07
+mod <- "magenta"
+i <- 2
+pthresh = "1e-07"
+sftpower <- sftpowers[i]
+
+df <- prs[[pthresh]]$residuals
+rownames(df) <- df$IID
+df$IID <- NULL
+
+# reconstructing the modules again, and saving the TOM file
+print("Running WGCNA")
+net <- blockwiseModules(datExpr = df,
+                        power=sftpower,
+                        TOMType = "unsigned",
+                        minModuleSize = 10,
+                        minKMEtoStay = 0.01,
+                        maxBlockSize = 20000,
+                        deepSplit = 4,
+                        detectCutHeight = 0.999,
+                        saveTOMs = T,
+                        pamStage = T,
+                        pamRespectsDendro = T,
+                        mergeCutHeight = 0.1,
+                        networkType = "unsigned",
+                        verbose = 10,
+                        minCoreKME = 0,
+                        minModuleKMESize = 1)
+
+
+load(paste0("./",net$TOMFiles))
+adj <- TOM
+adj[adj > 0] = 1
+# adj[adj != 1] = 0
+network <- graph.adjacency(adj,mode="undirected")
+network <- simplify(network)  # removes self-loops
+results <- net
+
+# getting correlation between all
+df1 <- df
+colnames(df1) <- 1:ncol(df)
+aa <- WGCNA::cor(df1, 
+                 use = "pairwise.complete.obs", 
+                 method = "pearson")
+
+aa <- melt(aa)
+# getting edge list as a data frame:
+compg.edges <- as.data.frame(get.edgelist(network))
+names(compg.edges) <- names(aa)[1:2]
+# mergining it with the melted correlated matrix:
+aa <- merge(aa,compg.edges,on=c("V1","V2"))
+E(network)$importance <- abs(aa$value)
+
+# cleaning up hub names:
+net_names <- ifelse(colnames(df)=="LOAD","LOAD",gsub("cabg","",
+                                                     gsub("medadj","",
+                                                          tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", colnames(df))),4)))))
+net_names <- ifelse(grepl("covid",net_names),"covid 19 ",
+                    ifelse(grepl("smoking",net_names),"smoking ",
+                           ifelse(grepl("pr ",net_names),str_sub(net_names,4),
+                                  net_names)))
+net_names <- ifelse(grepl("BI_",colnames(df)),paste0(net_names,"biomarker"),net_names)
+hub=str_to_title(net_names)
+hub=ifelse(hub=="Load","LOAD",
+           ifelse(hub=="Ldl Direct  ","LDL Direct",
+                  ifelse(hub=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                         ifelse(hub=="Family History Ad Father ","Family History AD Father",
+                                ifelse(hub=="Hmg Coa Reductase Inhibitor Statin","HMG COA Reductase Inhibitor Statin",
+                                       ifelse(hub=="Family History Ad Siblings ","Family History AD Siblings", hub))))))
+
+network <- set.vertex.attribute(network, "name", value=hub)
+V(network)$color <- results$colors
+# par(mar=c(0,0,0,0))
+# remove unconnected nodes
+network <- delete.vertices(network, degree(network)==0)
+network1 <- delete.vertices(network, V(network)$color!=c(mod))
+
+e <- get.edgelist(network1,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(network1),
+                                       area=8*(vcount(network1)^2),
+                                       repulse.rad=(vcount(network1)^2.5))
+jpeg(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/network_plot_",mod,
+            "_module_",pthresh,"_",GenoType,".jpg"), 
+     width = 10, height = 10, units = 'in', res = 200)
+plot(network1,layout=l,
+     edge.width=E(network)$importance*5,
+     edge.arrow.size=0.2, 
+     vertex.label.cex=0.75,
+     vertex.label.family="Helvetica",
+     vertex.label.font=0.75,
+     vertex.shape="circle")
+mtext(latex2exp::TeX("Network Plot Of The Green Magenta From $\\Pi_{MHC-APOE-,1 \\times 10^{-7}}\\."), side=1)
 dev.off()
 
 ## 7.3) Module heritability relationship ----
