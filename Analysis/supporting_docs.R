@@ -62,7 +62,7 @@ reorder_cormat <- function(cormat){
 # This function will generate association analysis on the WGCNA hubs and AD and AD-related pathology
 # Using the rms package and running .236 bootstrap method
 # 95% CI (cite): https://discourse.datamethods.org/t/confidence-intervals-for-bootstrap-validated-bias-corrected-performance-estimates/1990/9
-OLS_heatmap_dat_GEN_WGCNA <- function(dat,
+OLS_heatmap_dat_GEN_WGCNA <- function(dat,selected_prs="LOAD",
                                       Study=c("ROSMAP","ADNI"),
                                       GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
                 
@@ -130,9 +130,9 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 print(paste(egene,pheno,alpha))
                                                                                 if(egene=="grey"){next}
                                                                                 if (pheno=="cogdx"){
-                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
+                                                                                base_form <- formula(paste(pheno,"~",selected_prs,"+msex+age_death+pmi"))
                                                                                 form <- formula(paste(pheno,"~","+msex+age_death+pmi"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+age_death+pmi"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+",selected_prs,"+msex+age_death+pmi"))
                                                                                 mod_base <- lrm(data=md3,base_form, y=T, x=T)
                                                                                 mod <- lrm(data=md3,form, y=T, x=T)
                                                                                 mod_full <- lrm(data=md3,form_full, y=T, x=T)
@@ -172,9 +172,9 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975),na.rm=T)[2])
                                                                 } 
                                                                                 if (pheno=="cogn_global_random_slope"|pheno=="cogn_globaln_lv"){
-                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+educ"))
+                                                                                base_form <- formula(paste(pheno,"~",selected_prs,"+msex+educ"))
                                                                                 form <- formula(paste(pheno,"~","+msex+educ"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+educ"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+",selected_prs,"+msex+educ"))
                                                                                 mod_base <- ols(data=md3,base_form, y=T, x=T)
                                                                                 mod <- ols(data=md3,form, y=T, x=T)
                                                                                 mod_full <- ols(data=md3,form_full, y=T, x=T)
@@ -214,9 +214,9 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                                                 R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975))[2])
                                                                 } 
                                                                                 if (pheno=="tangles_sqrt"|pheno=="amyloid_sqrt"){
-                                                                                base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
+                                                                                base_form <- formula(paste(pheno,"~",selected_prs,"+msex+age_death+pmi"))
                                                                                 form <- formula(paste(pheno,"~","+msex+age_death+pmi"))
-                                                                                form_full <- formula(paste(pheno,"~",egene,"+LOAD+msex+age_death+pmi"))
+                                                                                form_full <- formula(paste(pheno,"~",egene,"+",selected_prs,"+msex+age_death+pmi"))
                                                                                 mod_base <- ols(data=md3,base_form, y=T, x=T)
                                                                                 mod <- ols(data=md3,form, y=T, x=T)
                                                                                 mod_full <- ols(data=md3,form_full, y=T, x=T)
@@ -297,7 +297,7 @@ OLS_heatmap_dat_GEN_WGCNA <- function(dat,
                                                        coeff_eigenPS=coeff_eigenPS,
                                                        P_likelihood=P_likelihood,
                                                        n=nvalues)
-                                write.csv(assocres,paste0(path_wgcna,"/assocres_compare_hub_heatmap_dat6.csv"),row.names = F)
+                                write.csv(assocres,paste0(path_wgcna,"/assocres_compare_hub_heatmap_dat_",selected_prs,".csv"),row.names = F)
                 }
 }
 
@@ -2275,7 +2275,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
                                                 rownames(df) <- df$IID
                                                 df$IID <- NULL
                                                 prs_names <- names(wgcna_dat_results[[pthres]]$net$colors[wgcna_dat_results[[pthres]]$net$colors==color])
-                                                matrix <- df %>% dplyr::select(prs_names)
+                                                matrix <- df %>% dplyr::select(all_of(prs_names))
                                                 assoc <- wgcna_dat_results[[pthres]]$assoc_res %>%
                                                                 filter(egene==paste0("ME",color))
                                                 hub <- wgcna_dat_results[[pthres]]$hub
@@ -2311,6 +2311,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
 dat_most_connected <- list()
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
                 path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
                 mostly_connected_phenos <- list()
                 for(prs in names(wgcna_dat_results)){
                                 print(prs)
@@ -2569,11 +2570,21 @@ table(aa$genotype_lst)
 # 25   26 
 
 ### 7.1.1) If assoc results need an update, run this (takes long) ----
+# First, taking in the hub PRSs list:
+top_hub_prs <- aa %>% 
+  pull(hub) %>% 
+  unique() %>%
+  as.vector()
+
 start = Sys.time()
 # OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_APOE")
-OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_MHC", dat=aa)
-# OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_MHC_APOE")
-OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "With_MHC_APOE", dat=aa)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="LOAD", GenoType = "No_MHC", dat=aa)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="LOAD", GenoType = "With_MHC_APOE", dat=aa)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "With_MHC_APOE", dat=wgcna_pca_dat)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "No_MHC", dat=wgcna_pca_dat)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "No_APOE", dat=wgcna_pca_dat)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "No_MHC_APOE", dat=wgcna_pca_dat)
+
 end = Sys.time()
 print(end-start)
 
@@ -2787,26 +2798,26 @@ ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg")
 ggsave(filename = paste0(path,"/full_association_analysis_AUC_manuscript_",Genotype,".jpg"), 
        width = 12, height = 12, dpi=200)
 
-g1_presentation <- ggplot(dat_gg %>%filter(modulevalues=="pink"), 
-                          aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
-                                                            "0.0005","0.0001","5e-05","1e-05","5e-06",
-                                                            "1e-06","5e-07","1e-07","5e-08")), 
-                              y=100*value, 
-                              fill=Performance)) + 
-                geom_bar(stat="identity", position=position_dodge()) +
-                # geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
-                #               position=position_dodge(.9)) +
-                scale_fill_brewer(palette="Paired") + 
-                theme_bw() + 
-                facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
-                theme(axis.text.x=element_text(angle = -45, hjust = 0))+
-                ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
-                xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
-                ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{ALL}})+\\PRS_{LOAD}+Covariates$")) + 
-                theme(plot.title = element_text(hjust = 0.5))
-
-ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_association_analysis_","ALL",".jpg"), 
-       g1_presentation, width = 8, height = 10, dpi=200) #width=12
+# g1_presentation <- ggplot(dat_gg %>%filter(modulevalues=="pink"), 
+#                           aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+#                                                             "0.0005","0.0001","5e-05","1e-05","5e-06",
+#                                                             "1e-06","5e-07","1e-07","5e-08")), 
+#                               y=100*value, 
+#                               fill=Performance)) + 
+#                 geom_bar(stat="identity", position=position_dodge()) +
+#                 # geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
+#                 #               position=position_dodge(.9)) +
+#                 scale_fill_brewer(palette="Paired") + 
+#                 theme_bw() + 
+#                 facet_wrap(~name+modulevalues,nrow = 4, scales = "free") +
+#                 theme(axis.text.x=element_text(angle = -45, hjust = 0))+
+#                 ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
+#                 xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
+#                 ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{ALL}})+\\PRS_{LOAD}+Covariates$")) + 
+#                 theme(plot.title = element_text(hjust = 0.5))
+# 
+# ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/full_association_analysis_","ALL",".jpg"), 
+#        g1_presentation, width = 8, height = 10, dpi=200) #width=12
 
 
 Genotype <- "No_MHC"
