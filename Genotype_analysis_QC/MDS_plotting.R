@@ -1,5 +1,5 @@
 library(data.table)
-path <- "/Users/amin/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Datasets/MDS/"
+path <- "../Datasets/MDS/"
 setwd(path)
 data<- read.table(file="MDS.mds.txt",header=TRUE) 
 race<- read.table(file="racefile.txt",header=TRUE) 
