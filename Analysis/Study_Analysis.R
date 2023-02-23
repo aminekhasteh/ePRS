@@ -2193,7 +2193,7 @@ p1 <- ggplot(wgcna_pca_dat,
                 geom_beeswarm(aes(size=ModuleSize)) + #geom_boxplot() + aes(size=ModuleSize)
                 # scale_fill_manual(values = brightness(fair_cols, 0.9)) +
                 facet_wrap(~factor(genotype_lst,
-                                   levels=c("ALL","MHC-","APOE-","MHC-APOE-")), scale="free_y",ncol=1) +
+                                   levels=c("ALL","MHC-","APOE-","MHC/APOE-")), scale="free_y",ncol=1) +
                 theme_bw() +
                 theme(plot.title = element_text(hjust = 0.5)) +
                 guides(color = "none") +
@@ -4574,7 +4574,7 @@ ggsave(filename = paste0("../Thesis/Presenations/Thesis_defence","/heritability_
 
                 
 
-# 8) Deeper analysis on the APOE sensitivity region ----
+# 8) Deeper analysis of the ePRS hubs with the selected phenotypes ----
  # selecting some of the important PRSs that WGCNA picked up on (hubs of ePRSs associated with AD)
 
     # high cholesterol -- CA_high_cholesterol_h0.06131
@@ -4624,7 +4624,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
     #### Modelling against LOAD 
     # merge data
     md3 <- merge(df,ROSmaster,by="IID")
-    rownames(md3) <- md2$IID
+    rownames(md3) <- md3$IID
     md3$IID <- NULL
     
     for (pheno in c(indepvec.pathology,indepvec.cognition)){
@@ -4746,7 +4746,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
   }
 }
 
-assocres1 <- data.frame(Genotype=Genotype,
+assocres <- data.frame(Genotype=Genotype,
                        alpha_level=alpha_val,
                        pheno=phenovalues,
                        r2val_base=r2validated_base,
@@ -4762,15 +4762,15 @@ assocres1 <- data.frame(Genotype=Genotype,
 
 # saving this file, since it's time consuming to run
 write.csv(assocres,
-          paste0("../Datasets/CLUMP_500_0.2/ROSMAP",
-                 "/assocres_compare_PRS_APOE_sensitivity_main.csv"),
+          paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA",
+                 "/assocres_compare_PRS_hubs.csv"),
           row.names = F)
 
-assocres <- read.csv("../Datasets/CLUMP_500_0.2/ROSMAP/assocres_compare_PRS_APOE_sensitivity_main.csv")
+assocres <- read.csv("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/assocres_compare_PRS_hubs.csv")
 
 dat_gg <- assocres %>%
-  filter(pheno!="cogdx") %>%
-  mutate(P_fdr=p.adjust(P_likelihood,method = "fdr")) %>%
+  mutate(p_fdr_adjusted=p.adjust(P_likelihood,method = "fdr")) %>%
+  filter(p_fdr_adjusted<0.05) %>%
   dplyr::select(alpha_level,
                 pheno,
                 PRS_lst,
@@ -4806,12 +4806,22 @@ dat_gg <- assocres %>%
                 -r2validated_full_CI_U) %>%
   mutate(Performance=ifelse(variable=="r2val_base",
                             "Base Model",
-                            "Full Model"))
+                            "Full Model"),
+         Genotype=ifelse(Genotype=="No_MHC","MHC-",
+                         ifelse(Genotype=="No_APOE","APOE-",
+                                ifelse(Genotype=="No_MHC_APOE","MHC/APOE-",
+                                       "ALL"))))
   
   
+indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
+indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv") # Don't have this variable: "cogn_global_at_lastvisit"
 pathnames <- c("Final AD","Total AB","PHF tau")
-cognames <- c("Global slope","Global last visit") 
+cognames <- c("Global slope","Global last visit")
+varnameindex <- data.frame(name=c(pathnames,cognames),var=c(indepvec.pathology,indepvec.cognition))
 
+dat_gg <- merge(varnameindex,dat_gg,by.x = "var",by.y="pheno")
+
+print(unique(dat_gg$PRS_lst))
 ggplot(dat_gg, 
        aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
                                          "0.0005","0.0001","5e-05","1e-05","5e-06",
@@ -4823,11 +4833,11 @@ ggplot(dat_gg,
                 position=position_dodge(.9)) +
   scale_fill_brewer(palette="Paired") + 
   theme_bw() + 
-  facet_wrap(~name+,nrow = 4, scales = "free") +
+  facet_wrap(~Genotype+name,nrow = 4, scales = "free") +
   theme(axis.text.x=element_text(angle = -45, hjust = 0))+
   ylab(latex2exp::TeX("Model performance ($\\R^2$)")) + #  or $\\R^2$ $\\AUC$
   xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
-  ggtitle(latex2exp::TeX("Phenotype ~ $(\\ePRS_{Pi_{ALL}})+\\PRS_{LOAD}+Covariates$")) + 
+  ggtitle(latex2exp::TeX("Phenotype ~ $(\\PRS_{hub})+\\PRS_{LOAD}+Covariates$")) + 
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_label(data = subset(dat_gg %>% mutate(significance=ifelse(P_likelihood<0.001,"***",
                                                                  ifelse(P_likelihood<0.01,"**",
@@ -4837,8 +4847,303 @@ ggplot(dat_gg,
              fill=NA,
              nudge_y=1.5)
 
+ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/hub_PRS_assossiation_analysis_full.jpg"), 
+       width = 8, height = 10, dpi=200)
+ 
+ # 8.1) Sensitivity analysis of the APOE region with high cholesterol PRS ----
 
-ggsave(filename = paste0(path,"/full_association_analysis_AUC_",Genotype,".jpg"), 
-       width = 8, height = 8, dpi=200)
-ggsave(filename = paste0(path,"/full_association_analysis_AUC_manuscript_",Genotype,".jpg"), 
-       width = 12, height = 12, dpi=200)
+ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+# Changing Cogdx variable:
+ROSmaster$cogdx[which((ROSmaster$cogdx==2)|(ROSmaster$cogdx==3)|(ROSmaster$cogdx==5)|(ROSmaster$cogdx==6))] <- NA
+ROSmaster$cogdx[which((ROSmaster$cogdx==4))] <- 2
+
+# form. covatiates only, base_form. IGAP + covariates, form_full. IGAP + eigenPS + covariates
+indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
+indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv")
+
+selected_prs_lst <- c("CA_high_cholesterol_h0.06131",
+                      "BI_LDL_direct_h0.06060",
+                      "CO_Mean_carotid_210_degree_h0.08258",
+                      "PH_Chronic_liver_disease_and_cirrhosis_h0.09773")
+
+index <- 1
+alpha_val = NULL
+r2validated_base <- NULL
+r2validated_full <- NULL
+r2validated_base_CI_L <- NULL
+r2validated_full_CI_L <- NULL
+r2validated_base_CI_U <- NULL
+r2validated_full_CI_U <- NULL
+nvalues <- NULL
+phenovalues <- NULL
+pcvalues <- NULL
+P_likelihood <- NULL
+coeff_PRS <- NULL
+coeff_PRShub <- NULL
+PRS_lst <- NULL
+Genotype <- NULL
+
+prs_ALL <- prs <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/With_MHC_APOE/Residual_results_all_p-vals.rds")
+
+for(GenoType in c("No_APOE","No_MHC_APOE")){ # ,"With_MHC_APOE","No_MHC"
+  path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+  prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
+  
+  for(alpha in names(prs)){
+    # Defining the datasets
+    df <- prs[[alpha]]$residuals
+    
+    #### Modelling against LOAD 
+    # merge data
+    md3 <- merge(df,ROSmaster,by="IID")
+    # getting PRS of cholesterol from Pi_ALL matrix:
+    df_ALL <- prs_ALL[[alpha]]$residuals %>%
+      select(IID,any_of(selected_prs_lst))
+    md3 <- md3 %>% 
+      select(-any_of(selected_prs_lst)) %>% # removing the selected prs from the prs matrix
+      merge(.,df_ALL,by="IID")
+    rownames(md3) <- md3$IID # setting row names to IIDs
+    md3$IID <- NULL # removing IID column
+    
+    for (pheno in c(indepvec.pathology,indepvec.cognition)){
+      
+      for(selected_prs in selected_prs_lst){
+
+        if(!selected_prs %in% names(md3)){next}
+        if (pheno=="cogdx"){
+          base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
+          form_full <- formula(paste(pheno,"~",selected_prs,"+LOAD+msex+age_death+pmi"))
+          mod_base <- lrm(data=md3,base_form, y=T, x=T)
+          mod_full <- lrm(data=md3,form_full, y=T, x=T)
+          P_likelihood_test <- rms::lrtest(mod_base, mod_full)$stats[3]
+          valid_base <- rms::validate(mod_base, method=".632",B=200,bw=TRUE)
+          valid_full <- rms::validate(mod_full, method=".632",B=200,bw=TRUE)
+          
+          R2_base <- valid_base['Dxy', 'index.corrected'] * 0.5 + 0.5
+          R2_full <- valid_full['Dxy', 'index.corrected'] * 0.5 + 0.5
+          
+          # Because the AUC/R^2 values are so close, we calculate the 95% CI here:
+          dxy <- NULL
+          dxy2 <- NULL
+          for(i in 1 : 50) {
+            f <- mod_base
+            f2 <- mod_full
+            n <- nrow(md3)                
+            g <- update(f, subset=sample(1 : n, n, replace=TRUE))
+            v <- rms::validate(g, method=".632",B=200,bw=TRUE)
+            g2 <- update(f2, subset=sample(1 : n, n, replace=TRUE))
+            v2 <- rms::validate(g2, method=".632",B=200,bw=TRUE)
+            dxy[i] <- v['Dxy', 'index.corrected'] * 0.5 + 0.5
+            dxy2[i] <- v2['Dxy', 'index.corrected'] * 0.5 + 0.5
+          }
+          R2_base_CI_L <-  as.numeric(quantile(dxy, c(.025, .975),na.rm=T)[1])
+          R2_base_CI_U <-  as.numeric(quantile(dxy, c(.025, .975),na.rm=T)[2])
+          R2_full_CI_L <-  as.numeric(quantile(dxy2, c(.025, .975),na.rm=T)[1])
+          R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975),na.rm=T)[2])
+        } 
+        if (pheno=="cogn_global_random_slope"|pheno=="cogn_globaln_lv"){
+          base_form <- formula(paste(pheno,"~","LOAD+msex+educ"))
+          form_full <- formula(paste(pheno,"~",selected_prs,"+LOAD+msex+educ"))
+          mod_base <- ols(data=md3,base_form, y=T, x=T)
+          mod_full <- ols(data=md3,form_full, y=T, x=T)
+          P_likelihood_test <- rms::lrtest(mod_base, mod_full)$stats[3]
+          valid_base <- rms::validate(mod_base, method=".632",B=50,bw=TRUE) # valid_base[1,3] --> R2
+          valid_full <- rms::validate(mod_full, method=".632",B=50,bw=TRUE)
+          
+          R2_base <- valid_base['R-square', 'index.corrected']
+          R2_full <- valid_full['R-square', 'index.corrected']
+          
+          # Because the AUC/R^2 values are so close, we calculate the 95% CI here:
+          dxy <- NULL
+          dxy2 <- NULL
+          for(i in 1 : 50) {
+            f <- mod_base
+            f2 <- mod_full
+            n <- nrow(md3)                
+            g <- update(f, subset=sample(1 : n, n, replace=TRUE))
+            v <- rms::validate(g, method=".632",B=200,bw=TRUE)
+            g2 <- update(f2, subset=sample(1 : n, n, replace=TRUE))
+            v2 <- rms::validate(g2, method=".632",B=200,bw=TRUE)
+            dxy[i] <-   v['R-square', 'index.corrected']
+            dxy2[i] <- v2['R-square', 'index.corrected']
+          }
+          R2_base_CI_L <-  as.numeric(quantile(dxy, c(.025, .975))[1])
+          R2_base_CI_U <-  as.numeric(quantile(dxy, c(.025, .975))[2])
+          R2_full_CI_L <-  as.numeric(quantile(dxy2, c(.025, .975))[1])
+          R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975))[2])
+        } 
+        if (pheno=="tangles_sqrt"|pheno=="amyloid_sqrt"){
+          base_form <- formula(paste(pheno,"~","LOAD+msex+age_death+pmi"))
+          form_full <- formula(paste(pheno,"~",selected_prs,"+LOAD+msex+age_death+pmi"))
+          mod_base <- ols(data=md3,base_form, y=T, x=T)
+          mod_full <- ols(data=md3,form_full, y=T, x=T)
+          P_likelihood_test <- rms::lrtest(mod_base, mod_full)$stats[3]
+          valid_base <- rms::validate(mod_base, method=".632",B=200,bw=TRUE) # valid_base[1,3] --> R2
+          valid_full <- rms::validate(mod_full, method=".632",B=200,bw=TRUE)
+          
+          R2_base <- valid_base['R-square', 'index.corrected']
+          R2_full <- valid_full['R-square', 'index.corrected']
+          
+          # Because the AUC/R^2 values are so close, we calculate the 95% CI here:
+          dxy <- NULL
+          dxy2 <- NULL
+          for(i in 1 : 50) {
+            f <- mod_base
+            f2 <- mod_full
+            n <- nrow(md3)                
+            g <- update(f, subset=sample(1 : n, n, replace=TRUE))
+            v <- rms::validate(g, method=".632",B=200,bw=TRUE)
+            g2 <- update(f2, subset=sample(1 : n, n, replace=TRUE))
+            v2 <- rms::validate(g2, method=".632",B=200,bw=TRUE)
+            dxy[i] <-   v['R-square', 'index.corrected']
+            dxy2[i] <- v2['R-square', 'index.corrected']
+          }
+          R2_base_CI_L <-  as.numeric(quantile(dxy, c(.025, .975))[1])
+          R2_base_CI_U <-  as.numeric(quantile(dxy, c(.025, .975))[2])
+          R2_full_CI_L <-  as.numeric(quantile(dxy2, c(.025, .975))[1])
+          R2_full_CI_U <-  as.numeric(quantile(dxy2, c(.025, .975))[2])
+        }
+        r2validated_base[index] <- R2_base
+        r2validated_full[index] <- R2_full
+        r2validated_base_CI_L[index] <- R2_base_CI_L
+        r2validated_full_CI_L[index] <- R2_full_CI_L     
+        r2validated_base_CI_U[index] <- R2_base_CI_U      
+        r2validated_full_CI_U[index] <- R2_full_CI_U
+        r2validated_base[index] <- R2_base
+        r2validated_full[index] <- R2_full
+        nvalues[index] <- length(mod_base$y)
+        phenovalues[index] <- pheno
+        alpha_val[index] <- alpha
+        coeff_PRS[index] <- mod_full$coefficients[3]
+        coeff_PRShub[index] <- mod_full$coefficients[2]
+        PRS_lst[index] <- selected_prs
+        P_likelihood[index] <- P_likelihood_test
+        Genotype[index] <- GenoType
+        index <- index + 1
+      }
+      
+    }
+  }
+}
+
+assocres <- data.frame(Genotype=Genotype,
+                       alpha_level=alpha_val,
+                       pheno=phenovalues,
+                       r2val_base=r2validated_base,
+                       r2val_full=r2validated_full,
+                       r2validated_base_CI_L=r2validated_base_CI_L,
+                       r2validated_full_CI_L=r2validated_full_CI_L,
+                       r2validated_base_CI_U=r2validated_base_CI_U,
+                       r2validated_full_CI_U=r2validated_full_CI_U,
+                       coeff_PRS=coeff_PRS,
+                       coeff_PRShub=coeff_PRShub,
+                       PRS_lst=PRS_lst,
+                       P_likelihood=P_likelihood,
+                       n=nvalues)
+
+write.csv(assocres,
+          "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/assocres_compare_PRS_APOE_sensitivity_main_new.csv",
+          row.names = F)
+
+dat_gg <- assocres %>% 
+  filter(Genotype=="No_APOE") %>%
+  mutate(p_fdr_adjusted=p.adjust(P_likelihood,method = "fdr")) %>%
+  filter(p_fdr_adjusted<0.05) %>%
+  mutate(delta_r=100*(r2val_full-r2val_base)) %>%
+  dplyr::select(alpha_level,
+                pheno,
+                PRS_lst,
+                Genotype,
+                coeff_PRS,
+                r2val_base,
+                r2validated_base_CI_L,
+                r2validated_base_CI_U,
+                r2validated_full_CI_L,
+                r2validated_full_CI_U,
+                r2val_full,
+                P_likelihood,
+                p_fdr_adjusted,
+                n) %>%
+  mutate(coeff_PRS=signif(coeff_PRS,3),
+         r2val_base=signif(r2val_base,3),
+         r2val_full=signif(r2val_full,3),
+         P_likelihood=signif(P_likelihood,3),
+         r2validated_base_CI_L=signif(r2validated_base_CI_L,3),
+         r2validated_base_CI_U=signif(r2validated_base_CI_U,3),
+         r2validated_full_CI_L=signif(r2validated_full_CI_L,3),
+         r2validated_full_CI_U=signif(r2validated_full_CI_U,3)) %>% 
+  reshape2::melt(.,measure.vars=c("r2val_base","r2val_full")) %>%
+  mutate(CI_U=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_U,
+                     r2validated_full_CI_U),
+         CI_L=ifelse(variable=="r2val_base",
+                     r2validated_base_CI_L,
+                     r2validated_full_CI_L)) %>%
+  dplyr::select(-r2validated_base_CI_L,
+                -r2validated_base_CI_U,
+                -r2validated_full_CI_L,
+                -r2validated_full_CI_U) %>%
+  mutate(Performance=ifelse(variable=="r2val_base",
+                            "Base Model",
+                            "Full Model"),
+         Genotype=ifelse(Genotype=="No_MHC","MHC-",
+                         ifelse(Genotype=="No_APOE","APOE-",
+                                ifelse(Genotype=="No_MHC_APOE","MHC/APOE-",
+                                       "ALL"))),
+         PRS_lst = ifelse(PRS_lst=="LOAD","LOAD",gsub("cabg","",
+                                                      gsub("medadj","",
+                                                           tolower(str_sub(gsub("_"," ",sub("\\h0..*", "", PRS_lst)),4))))),
+         PRS_lst = ifelse(grepl("covid",PRS_lst),"covid 19 ",
+                          ifelse(grepl("smoking",PRS_lst),"smoking ",
+                                 ifelse(grepl("pr ",PRS_lst),str_sub(PRS_lst,4),
+                                        PRS_lst))),
+         PRS_lst = ifelse(grepl("BI_",PRS_lst),paste0(PRS_lst,"biomarker"),PRS_lst),
+         PRS_lst = str_to_title(PRS_lst),
+         PRS_lst = ifelse(PRS_lst=="Load","LOAD",
+                          ifelse(PRS_lst=="Ldl Direct  ","LDL Direct",
+                                 ifelse(PRS_lst=="Ldl Direct Biomarker","LDL Direct Biomarker",
+                                        ifelse(PRS_lst=="Family History Ad Father ","Family History AD Father",
+                                               ifelse(PRS_lst=="Hmg Coa Reductase Inhibitor Statin ","HMG COA Reductase Inhibitor Statin",
+                                                      ifelse(PRS_lst=="Family History Ad Siblings ","Family History AD Siblings", PRS_lst)))))))
+
+
+indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
+indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv") # Don't have this variable: "cogn_global_at_lastvisit"
+pathnames <- c("Final AD","Total AB","PHF tau")
+cognames <- c("Global slope","Global last visit")
+varnameindex <- data.frame(name=c(pathnames,cognames),var=c(indepvec.pathology,indepvec.cognition))
+
+dat_gg <- merge(varnameindex,dat_gg,by.x = "var",by.y="pheno")
+
+print(unique(dat_gg$PRS_lst))
+ggplot(dat_gg, 
+       aes(x=factor(alpha_level,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+                                         "0.0005","0.0001","5e-05","1e-05","5e-06",
+                                         "1e-06","5e-07","1e-07","5e-08")), 
+           y=100*value, 
+           fill=Performance)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=100*CI_L, ymax=100*CI_U), width=.2,
+                position=position_dodge(.9)) +
+  scale_fill_brewer(palette="Paired") + 
+  theme_bw() + 
+  facet_wrap(~name+PRS_lst,nrow = 4, scales = "free") +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0))+
+  ylab(latex2exp::TeX("Model performance ($\\R^2, AUC$)")) + #  or $\\R^2$ $\\AUC$
+  xlab(latex2exp::TeX("$\\alpha$-value threshold")) +
+  ggtitle(latex2exp::TeX("Phenotype ~ $(\\PRS_{hub})+\\PRS_{LOAD}+Covariates, where \\
+\\PRS_{hub} \\in \\Pi_{ALL,\\alpha}, \\
+\\PRS_{LOAD} \\in \\Pi_{APOE-,\\alpha}$")) + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_label(data = subset(dat_gg %>%
+                             mutate(significance=ifelse(P_likelihood<0.001,"***",
+                                                        ifelse(P_likelihood<0.01,"**",
+                                                               ifelse(P_likelihood<0.05,"*","")))),
+                           Performance=="Base Model"),
+             aes(label=significance),
+             fill=NA,
+             nudge_y=1.5)
+
+ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/hub_PRS_assossiation_analysis_APOE_sensitivity.jpg"), 
+       width = 10, height = 10, dpi=200)
+   
