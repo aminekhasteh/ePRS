@@ -2,11 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 
-path = './Pan_UKBB/'
-# ukbb_manifest = pd.read_excel(path+"Pan_UK_Biobank_phenotype_manifest.xlsx",
-#                                 engine='openpyxl')
-
-ukbb_manifest = pd.read_csv(path+"ukbb_manifest_filtered_phenos.csv")
+ukbb_manifest = pd.read_csv("./Data/ukbb_manifest_filtered_phenos.csv")
 ##############################################################################
 #############################   |            |   #############################                                    
 #############################   | ANNOTATION |   #############################
@@ -61,4 +57,4 @@ new_pheno_annot = [i[ 0 : i.index("_n")] for i in new_pheno_annot]
 ukbb_manifest['new_pheno_annot'] = new_pheno_annot
 
 # Saving this file
-ukbb_manifest.to_csv(path+'Pan_UK_Biobank_phenotype_manifest.csv')
+ukbb_manifest.to_csv('./Data/ukbb_manifest_filtered_phenos.csv')
