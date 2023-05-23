@@ -543,7 +543,7 @@ ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/distribution_cog_vars.jpg",p1,
 path_to_save <- "../Datasets/CLUMP_500_0.2/ROSMAP/PRS/"
 
 # Reading Filtered PNUKBB manifest
-meta_pheno <- read.csv("../ePRS/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
 
 # GClambda_after_QC <- read.csv(paste0(path_to_save,"GClambda_ALL.txt"))
 # GClambda_after_QC$X <- NULL
@@ -1532,7 +1532,7 @@ plotDendroAndColors(net$dendrograms[[1]],
                     main = latex2exp::TeX("PRS dendrogram and module colors from $\\Pi_{ALL,5e-08}$"))
 print("Plotting Dendrogram")
 pdf(paste0(path_wgcna,"/dendrogram_","5e-08_ALL",".pdf"),w=10,h=7)
-print(gplt_dendrogram)
+# print(gplt_dendrogram)
 dev.off()
 
 ## 4.1) WGCNA power analysis plots ----
@@ -1935,7 +1935,7 @@ ggsave("../Thesis/Presenations/Thesis_defence/module_preservation_MHC-APOE-.jpg"
 
 modules <- c("weight ","asthma ",
              "high cholesterol ",
-             "rheumatoid arthritis ")
+             "rheumatoid arthritis and other inflammatory polyarthropathies ")
 selected_hubs <- list()
 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
                 path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
@@ -2154,6 +2154,7 @@ for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE"
 }               
 
 wgcna_pca_dat <- as.data.frame(cbind(genotype_lst,PVAL,Module,hubs,PC1,PC2,PC_top_80,N))
+
 
 # fair_cols <- list("#38170B"="1",
 #                   "#BF1B0B"="0.1",
@@ -2580,6 +2581,8 @@ start = Sys.time()
 # OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", GenoType = "No_APOE")
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="LOAD", GenoType = "No_MHC", dat=aa)
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="LOAD", GenoType = "With_MHC_APOE", dat=aa)
+OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="LOAD", GenoType = "No_MHC_APOE", dat=aa)
+
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "With_MHC_APOE", dat=wgcna_pca_dat)
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "No_MHC", dat=wgcna_pca_dat)
 OLS_heatmap_dat_GEN_WGCNA(Study = "ROSMAP", selected_prs="CA_high_cholesterol_h0.06131", GenoType = "No_APOE", dat=wgcna_pca_dat)
@@ -2592,7 +2595,8 @@ print(end-start)
 
 GenoType <- "With_MHC_APOE"
 path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
-dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat6.csv"))
+# dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat6.csv"))
+dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat_LOAD.csv"))
 dat2 <- merge(aa %>% filter(genotype_lst=="ALL"),dat1,
               by.x=c("PVAL","phenotype"),
               by.y=c("alpha_level","pheno")) %>%
@@ -2613,7 +2617,7 @@ write.csv(dat2,paste0(path,"/assoc_results_detailed.csv"),row.names = F)
 
 GenoType <- "No_MHC"
 path <- paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/",GenoType)
-dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat.csv"))
+dat1 <- read.csv(paste0(path,"/assocres_compare_hub_heatmap_dat_LOAD.csv"))
 dat2 <- merge(aa %>% filter(genotype_lst=="MHC-"),dat1,
               by.x=c("PVAL","phenotype"),
               by.y=c("alpha_level","pheno")) %>%

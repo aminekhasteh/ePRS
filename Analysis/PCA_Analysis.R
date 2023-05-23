@@ -23,8 +23,8 @@ pca_results_GEN <- function(Study=c("ROSMAP","ADNI"),
                             GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE"),
                             trait_type = FALSE){
                 
-                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
-                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
                 
                 # read in residuals of PRSs files
                 lmatrix <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
@@ -71,25 +71,26 @@ pca_results_GEN <- function(Study=c("ROSMAP","ADNI"),
                 write.csv(pca_results,paste0(path_to_save,'/pca_summary.csv'), row.names = FALSE)
 }
 
+pca_results_GEN(Study = "ROSMAP",GenoType = "With_MHC_APOE")
 pca_results_GEN(Study = "ROSMAP",GenoType = "No_MHC")
 pca_results_GEN(Study = "ROSMAP",GenoType = "No_APOE")
 pca_results_GEN(Study = "ROSMAP",GenoType = "No_MHC_APOE")
-pca_results_GEN(Study = "ROSMAP",GenoType = "With_MHC_APOE")
+
 
 # 2) pca_association function ----
   # This function will find the p-values of each PC for each selected phenotype in ROSMAP, and generate plots for them
 pca_association <- function(Study=c("ROSMAP","ADNI"),
                             GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE"),
                             PCnum=25){
-                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
-                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
                 
                 # Reading ROS/MAP phenotype dataset
-                ROSmaster <- readRDS("../Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("../Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+                meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
-                geno_pcs <- read.table("../Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
+                geno_pcs <- read.table("../Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
                 
                 # read in residuals of PRSs files
@@ -162,10 +163,10 @@ pca_association <- function(Study=c("ROSMAP","ADNI"),
                 }
                 saveRDS(results.G,file=paste0(path_to_save,"/PCA_results_all_p-vals",".rds"))
 }
+pca_association(Study = "ROSMAP",GenoType = "With_MHC_APOE")
 pca_association(Study = "ROSMAP",GenoType = "No_MHC")
 pca_association(Study = "ROSMAP",GenoType = "No_APOE")
 pca_association(Study = "ROSMAP",GenoType = "No_MHC_APOE")
-pca_association(Study = "ROSMAP",GenoType = "With_MHC_APOE")
 
 # 3) pca_heatmap_dat_GEN function ----
   # This function generates the data required to create the PCA heatmap explainer
@@ -174,15 +175,15 @@ pca_heatmap_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                                 PCNum = 25,
                                 topcont = 20){
                 
-                path_pca <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path_pca <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
                 # path_to_save_plot <- paste0("/Users/amink/OneDrive/Documents/Current Jobs/Masters Thesis/Thesis_Project/Code/Plots/PCA/",Study,"/",GenoType,"/Heatmaps")
                 
                 # Reading ROS/MAP phenotype dataset
-                ROSmaster <- readRDS("../Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("../Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+                meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
-                geno_pcs <- read.table("../Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
+                geno_pcs <- read.table("../Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
                 
                 results.G <- readRDS(paste0(path_pca,"/PCA_results_all_p-vals",".rds"))
@@ -222,25 +223,26 @@ pca_heatmap_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                 write.csv(pc_info_dat,paste0(path_pca,"/pc_heatmap_dat.csv"),row.names = FALSE)
                 
 }
+pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "With_MHC_APOE")
 pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "No_MHC")
 pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "No_APOE")
 pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "No_MHC_APOE")
-pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "With_MHC_APOE")
+
 
 # 4) pca_assoc_dat_GEN function----
 pca_assoc_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                               GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE"),
                               PCNum = 25,
                               topcont = 25){
-                path_pca <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
-                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_pca <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 
                 # Reading ROS/MAP phenotype dataset
-                ROSmaster <- readRDS("../Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("../Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+                meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
-                geno_pcs <- read.table("../Thesis_Project/Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
+                geno_pcs <- read.table("../Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
                 
                 
@@ -409,10 +411,11 @@ pca_assoc_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                                        PC_contributors=PC_contributors)
                 write.csv(assocres,paste0(path_pca,"/assocres_pc_heatmap_dat.csv"),row.names = FALSE)
 }
+pca_assoc_dat_GEN(Study = "ROSMAP", GenoType = "With_MHC_APOE")
 pca_assoc_dat_GEN(Study = "ROSMAP", GenoType = "No_MHC")
 pca_assoc_dat_GEN(Study = "ROSMAP", GenoType = "No_APOE")
 pca_assoc_dat_GEN(Study = "ROSMAP", GenoType = "No_MHC_APOE")
-pca_assoc_dat_GEN(Study = "ROSMAP", GenoType = "With_MHC_APOE")
+
 
 # (Don't run) pca_contribution function ----
 # This function will plot contributions of top n PCs for each selected PRS matrix
@@ -421,8 +424,8 @@ pca_contribution <- function(Study=c("ROSMAP","ADNI"),
                              label_subset = levels(as.factor(meta_pheno$category_manual)),
                              trait_type = FALSE,
                              PCnum=25){
-                path_pca <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
-                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path_pca <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
+                path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
                 
                 results.G <- readRDS(paste0(path_pca,"/PCA_results_all_p-vals",".rds"))
                 for (p in names(results.G)){
@@ -459,7 +462,8 @@ pca_contribution <- function(Study=c("ROSMAP","ADNI"),
                                 }
                 }
 }
+pca_contribution(Study = "ROSMAP",GenoType = "With_MHC_APOE")
 pca_contribution(Study = "ROSMAP",GenoType = "No_MHC")
 pca_contribution(Study = "ROSMAP",GenoType = "No_APOE")
 pca_contribution(Study = "ROSMAP",GenoType = "No_MHC_APOE")
-pca_contribution(Study = "ROSMAP",GenoType = "With_MHC_APOE")
+

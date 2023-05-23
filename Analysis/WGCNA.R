@@ -22,8 +22,8 @@ library(colorspace)
 WGCNA_sftpowers_GEN <- function(Study=c("ROSMAP","ADNI"),
                                 GenoType=c("No_APOE","No_MHC",
                                            "No_MHC_APOE","With_MHC_APOE")){
-                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
-                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 all_power_analysis <- list()
                 for (pthres in names(prs)[order(as.numeric(names(prs)),decreasing = F)]){
@@ -81,19 +81,20 @@ WGCNA_sftpowers_GEN(Study="ROSMAP",GenoType="No_MHC_APOE")
 
 # 2) Network generation ----
   # This function creates detailed hub analysis from the WGCNA package, also creates initial association results
-WGCNA_dat_plot_GEN <- function(sftpowers,
-                               Study,
+WGCNA_dat_plot_GEN <- function(Study,
                                GenoType){
-                path <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
-                path_to_save <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
+                path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
+                path_to_save <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/WGCNA/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
-                sftindex <- 1
+                all_power_analysis <- readRDS(paste0(path_to_save,"/powerstudy_results.rds"))
+                # sftindex <- 1
                 wgcna_results_lst <-  list()
                 for (pthres in names(prs)[order(as.numeric(names(prs)),decreasing = F)]) {
                                 df <- prs[[pthres]]$residuals
                                 rownames(df) <- df$IID
                                 df$IID <- NULL
-                                sftpower <- sftpowers[sftindex]
+                                sftpower <- all_power_analysis[[pthres]]$powerEstimate
+                                if (sftpower >20){sftpower=6}
                                 print("Running WGCNA")
                                 net <- blockwiseModules(datExpr = df,
                                                         power=sftpower,
@@ -172,9 +173,9 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                                 ##### association with AD phenotypes
                                 ###################################################
                                 ##### module - trait associations, monocytes & DLPFC
-                                ROSmaster <- readRDS("../Thesis_Project/Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+                                ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
                                 # Reading Filtered PNUKBB manifest
-                                meta_pheno <- read.csv("../Thesis_Project/code/Pan_UKBB/ukbb_manifest_filtered_phenos.csv")
+                                meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
                                 # Changing Cogdx variable:
                                 ROSmaster$cogdx[which((ROSmaster$cogdx==2)|(ROSmaster$cogdx==3)|(ROSmaster$cogdx==5)|(ROSmaster$cogdx==6))] <- NA
                                 ROSmaster$cogdx[which((ROSmaster$cogdx==4))] <- 2
@@ -358,7 +359,7 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                                 # print(gplt_assoc)
                                 # dev.off()
                                 
-                                sftindex <- sftindex + 1
+                                # sftindex <- sftindex + 1
                                 
                                 wgcna_results_lst[[pthres]] <- list(net = net,
                                                                     assoc_res = results,
@@ -369,21 +370,21 @@ WGCNA_dat_plot_GEN <- function(sftpowers,
                 saveRDS(wgcna_results_lst,file=paste0(path_to_save,"/wgcnaresults_all",".rds"))
 }
 
-WGCNA_dat_plot_GEN(sftpowers = c(3,2,17,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="With_MHC_APOE")
-WGCNA_dat_plot_GEN(sftpowers = c(8,7,4,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC")
-WGCNA_dat_plot_GEN(sftpowers = c(4,2,3,1,1,1,1,1,1,1,1,2,1,1,1),Study="ROSMAP",GenoType="No_APOE")
-WGCNA_dat_plot_GEN(sftpowers = c(10,4,1,1,1,1,1,1,1,1,1,1,1,1,1),Study="ROSMAP",GenoType="No_MHC_APOE")
+WGCNA_dat_plot_GEN(Study="ROSMAP",GenoType="With_MHC_APOE")
+WGCNA_dat_plot_GEN(Study="ROSMAP",GenoType="No_MHC")
+WGCNA_dat_plot_GEN(Study="ROSMAP",GenoType="No_APOE")
+WGCNA_dat_plot_GEN(Study="ROSMAP",GenoType="No_MHC_APOE")
 # 3) Module information ----
   # Getting module information (number of modules for each phenotype)
 PRSs <- NULL
 LEN_MODULE <- NULL
 Pi <- NULL
 index<-1
-path_wgcna <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/","No_MHC")
+path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/","With_MHC_APOE")
 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))
 for(prs in names(wgcna_dat_results)){
                 for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){
-                                path_wgcna <- paste0("../Thesis_Project/Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",GenoType)
+                                path_wgcna <- paste0("../Datasets/CLUMP_500_0.2/","ROSMAP","/WGCNA/",GenoType)
                                 wgcna_dat_results <- readRDS(file=paste0(path_wgcna,"/wgcnaresults_all",".rds"))   
                                 colors <- wgcna_dat_results[[prs]]$net$colors
                                 Pi[index] <- GenoType
@@ -395,5 +396,5 @@ for(prs in names(wgcna_dat_results)){
 
 module_count <- as.data.frame(cbind(Pi,PRSs,LEN_MODULE))
 module_count <- reshape2::dcast(module_count,PRSs~Pi,value.var='LEN_MODULE')
-write.csv(module_count,'../Thesis_Project/Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_counts.csv',row.names = F)
+write.csv(module_count,'../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/module_counts.csv',row.names = F)
                      

@@ -24,7 +24,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                 batch_effect <- fread("../Datasets/batch_index.txt",col.names = c("IID","batch"))
                 ROSmaster <- merge(ROSmaster,batch_effect,by.x="IID",by.y="IID")
                 # Reading Filtered PNUKBB manifest
-                meta_pheno <- read.csv("../ePRS/Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
+                meta_pheno <- read.csv("./Pan_UKBB/Data/ukbb_manifest_filtered_phenos.csv")
                 # Reading PCA of the ROS/MAP Genotype dataset
                 geno_pcs <- read.table("../Datasets/PCA_Genotype/geno_qc.eigenvec_new.txt",header=F)
                 names(geno_pcs) <- c("FID","IID",paste0("genoPC",seq(1:10)))
@@ -120,7 +120,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                                 i2 <- !is.na(i1) # to take care of non matches which are NA
                                 colnames(res)[i2] <- meta_pheno$new_pheno_annot[i1[i2]]
                                 
-                                # Removing phenotypes we selected manually
+                                # Removing phenotypes we selected manually refer to Pan_UKBB
                                 phenos_to_remove <- which(colnames(res) %in% meta_pheno$new_pheno_annot[which(meta_pheno$to_remove==1)])
                                 
                                 if (length(phenos_to_remove)>0) {
@@ -223,9 +223,9 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                 
 }
 
+primary_resid_data_GEN(Study="ROSMAP", GenoType="With_MHC_APOE", use_snp_count = TRUE, snp_count_n = 5, cor_thresh = 0.95, multimodal=FALSE)
 primary_resid_data_GEN(Study="ROSMAP", GenoType="No_MHC", use_snp_count = TRUE, snp_count_n = 5, cor_thresh = 0.95, multimodal=FALSE)
 primary_resid_data_GEN(Study="ROSMAP", GenoType="No_APOE", use_snp_count = TRUE, snp_count_n = 5, cor_thresh = 0.95, multimodal=FALSE)
 primary_resid_data_GEN(Study="ROSMAP", GenoType="No_MHC_APOE", use_snp_count = TRUE, snp_count_n = 5, cor_thresh = 0.95, multimodal=FALSE)
-primary_resid_data_GEN(Study="ROSMAP", GenoType="With_MHC_APOE", use_snp_count = TRUE, snp_count_n = 5, cor_thresh = 0.95, multimodal=FALSE)
 
 
