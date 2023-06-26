@@ -5,6 +5,7 @@ library(hrbrthemes)
 library(RColorBrewer)
 library(tidyverse)
 library(latex2exp)
+library(ggtext)
 library(WGCNA)
 library(reshape2)
 library(ggrepel)
@@ -27,6 +28,9 @@ library(broom)
 library(ggpol)
 library(RColorBrewer) 
 library(qgraph)
+library(ggthemes)
+library(gridExtra)
+library(ggpmisc) # for better geom_smooth in ggplots
 Study = "ROSMAP"
 
 # B) Functions ------
@@ -2497,9 +2501,6 @@ p3 <- ggplot(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"),
                 labs(x = latex2exp::TeX("$\\alpha$-value threshold"), 
                      y = latex2exp::TeX("-$\\log_{10}(p)$")) +
                 geom_hline(yintercept = -log10(0.05), linetype="dashed", color = "tomato3") +
-                # geom_text(aes(x = "0.1", y = -log10(0.003), 
-                #               label = "p-value = 0.05"),
-                #           color="tomato3") +
                 geom_label_repel(data=subset(wgcna_pca_dat %>% filter(genotype_lst=="MHC-"), 
                                             pfdr_assoc < 0.05),
                                  fill=NA,
@@ -4854,7 +4855,7 @@ ggplot(dat_gg,
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/hub_PRS_assossiation_analysis_full.jpg"), 
        width = 8, height = 10, dpi=200)
  
- # 8.1) Sensitivity analysis of the APOE region with high cholesterol PRS ----
+# 8.1) Sensitivity analysis of the APOE region with high cholesterol PRS ----
 
 ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
 # Changing Cogdx variable:
@@ -5151,3 +5152,351 @@ ggplot(dat_gg,
 ggsave(filename = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA","/hub_PRS_assossiation_analysis_APOE_sensitivity.jpg"), 
        width = 10, height = 10, dpi=200)
    
+# 9) Module preservation of the new QC'ed phenotype list compared to the original one in the study----
+## 9.1) overlapTable ----
+### With MCH and APOE
+wgcna_dat_results <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/wgcnaresults_all.rds")
+wgcna_dat_results_new <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/wgcnaresults_all.rds")
+
+for(prs in names(wgcna_dat_results)){
+  overlaptable_lst <- list()
+  reso <- wgcna_dat_results[[prs]]
+  resn <- wgcna_dat_results_new[[prs]]
+  
+  old.col.sub <- reso$net$colors[which(names(reso$net$colors) %in% names(resn$net$colors))]
+  new.col <- resn$net$colors
+  
+  newlabs <- matchLabels(old.col.sub,new.col)
+  old.col.sub <- newlabs
+  
+  ot <- overlapTable(old.col.sub,new.col)
+  
+  ptab <- melt(ot$pTable)
+  ptab$logp <- -log10(ptab$value)
+  ptab$sig <- as.factor(ifelse(ptab$value < 0.00001,"Yes","No"))
+  
+  g <- ggplot(data=ptab,aes(y=Var1,
+                       x=Var2,
+                       fill=sig))+
+    geom_tile()+
+    geom_text(aes(label=round(signif(logp,2))),
+              size=3)+
+    scale_fill_tableau()+
+    labs(y=paste0("Original clusters (n[PRS]=",length(names(reso$net$colors)),")"),
+         x=paste0("New clusters (n[PRS]=",length(names(resn$net$colors)),")"),
+         #title=latex2exp::TeX("Significance of overlap $\\-log_{10}(p-value)\\ ($\\Pi_{}\\)"),
+         title=latex2exp::TeX("Significance of overlap $\\log_{10}(p)"),
+         fill=latex2exp::TeX("$\\p \\leq \\10^{-5}"))+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = -45, hjust=0.05,vjust=0.2),
+          plot.title = element_text(hjust = 0.5))
+  overlaptable_lst[[prs]] <- g
+  ggsave(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/Preservation/plots/overlaptable_old_vs_new_",prs,".jpg"),g,
+         w=11,h=10, dpi=200)
+}
+
+## 9.2) ModulePreservation (takes hours to run) ----
+# reading wgcna data (this section takes hours, so we will save our rdata)
+wgcna_dat_results <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE/wgcnaresults_all.rds")
+wgcna_dat_results_new <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/wgcnaresults_all.rds")
+
+# reading the PRS data
+prs_main <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/With_MHC_APOE/Residual_results_all_p-vals.rds")
+prs_new <- readRDS("../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/With_MHC_APOE_new/Residual_results_all_p-vals.rds")
+
+for(prs in names(wgcna_dat_results)){
+  reso <- wgcna_dat_results[[prs]]
+  resn <- wgcna_dat_results_new[[prs]]
+  reso.original <- prs_main[[prs]]$residuals
+  resn.original <- prs_new[[prs]]$residuals
+  # removing IIDs:
+  IIDs <- reso.original$IID
+  reso.original <- reso.original %>% select(-IID)
+  resn.original <- resn.original %>% select(-IID)
+  
+  # module preservation
+  setLabels = c("Main", "New");
+  multiExpr = list(main = list(data = reso.original), 
+                   new = list(data = resn.original));
+  multiColor = list(main = reso$net$colors, new = resn$net$colors);
+  system.time( {
+    mp = modulePreservation(multiExpr, multiColor,
+                            referenceNetworks = 1,
+                            nPermutations = 200,
+                            randomSeed = 1,
+                            quickCor = 0,
+                            verbose = 3)
+  } );
+  # Save the results
+  save(mp, file = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/Preservation/modulePreservation_",prs,".RData"));
+}
+
+# plotting median rank and zsummaries:
+for(prs in names(wgcna_dat_results)){
+  # loading preserved rdata
+  load(file = paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/Preservation/modulePreservation_",prs,".RData"))
+  # We now analyze the data. Isolate the observed statistics and their Z scores:
+  ref = 1
+  test = 2
+  statsObs = cbind(mp$quality$observed[[ref]][[test]][, -1], mp$preservation$observed[[ref]][[test]][, -1])
+  statsZ = cbind(mp$quality$Z[[ref]][[test]][, -1], mp$preservation$Z[[ref]][[test]][, -1]);
+  
+  # Compare preservation to quality:
+  print( cbind(statsObs[, c("medianRank.pres", "medianRank.qual")],
+               signif(statsZ[, c("Zsummary.pres", "Zsummary.qual")], 2)) )
+
+  # Module labels and module sizes are also contained in the results
+  modColors = rownames(mp$preservation$observed[[ref]][[test]])
+  moduleSizes = mp$preservation$Z[[ref]][[test]][, 1];
+  # leave grey and gold modules out
+  plotMods = !(modColors %in% c("grey", "gold"));
+  # Text labels for points
+  text = modColors[plotMods];
+  # Auxiliary convenience variable
+  plotData = cbind(mp$preservation$observed[[ref]][[test]][, 2], mp$preservation$Z[[ref]][[test]][, 2])
+  # Main titles for the plot
+  mains = c("Preservation Median rank", "Preservation Zsummary");
+  ggplots <- list()
+  for (p in 1:2){
+    min = min(plotData[, p], na.rm = TRUE);
+    max = max(plotData[, p], na.rm = TRUE);
+    # Adjust ploting ranges appropriately
+    if (p==2){
+      if (min > -max/10) min = -max/10
+      ylim = rev(c( max + 0.1 * (max-min), min - 0.1 * (max-min)))
+    } else{
+      ylim = c( min - 0.1 * (max-min), max + 0.1 * (max-min))
+      }
+    # let's generate the data for ggplot
+    gg_data <- data.frame(plotData) %>%
+      mutate(module_size=moduleSizes,
+             col=modColors) %>%
+      filter(plotMods)
+    # Add extra x-axis breaks manually.
+    x_breaks = c(1,5,10,50,100,500,1000)
+    x_labels = c(1,5,10,50,100,500,1000)
+    if(p==1){
+      gg_data$X <- gg_data$X1
+    } else{
+      gg_data$X <- gg_data$X2
+    }
+    
+    g <- ggplot(gg_data,aes(x=module_size,y=X,
+                       fill=col,label=col)) +
+      geom_point(shape = 21,size=3) +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5),
+            plot.background = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank()) +
+      ggtitle(mains[p]) +
+      geom_label_repel(size = 2,fill=NA,max.overlaps=50) +
+      labs(x = "Module size", y = mains[p]) + 
+      scale_x_log10() +
+      scale_x_log10(breaks=x_breaks,labels=x_labels ) +
+      ylim(ylim) +
+      ylab(mains[p]) +
+      guides(fill="none",size="none") +
+      scale_fill_manual(values=c("cyan"="cyan","darkgreen"="darkgreen","orange"="orange","saddlebrown"="saddlebrown","sienna3"="sienna3",
+                                 "paleturquoise"="paleturquoise","darkolivegreen"="darkolivegreen","palevioletred3","royalblue"="royalblue","brown"="brown","darkred"="darkred",
+                                 "magenta"="magenta","navajowhite2"="navajowhite2","green"="green","red"="red","pink"="pink","greenyellow"="greenyellow",
+                                 "midnightblue"="midnightblue","salmon"="salmon","yellow"="yellow","salmon4"="salmon4","skyblue3"="skyblue3","darkturquoise"="darkturquoise",
+                                 "steelblue"="steelblue","darkgrey"="darkgrey","skyblue"="skyblue","maroon"="maroon","lavenderblush3"="lavenderblush3",
+                                 "tan"="tan","lightgreen"="lightgreen","black"="black","lightyellow"="lightyellow3","floralwhite"="floralwhite","thistle1"="thistle1",
+                                 "plum2"="plum2","turquoise"="turquoise","blue"="blue","ivory"="ivory","coral1"="coral1","darkseagreen4"="darkseagreen4",
+                                 "plum1"="plum1","purple"="purple","violet"="violet","bisque4"="bisque4","yellowgreen"="yellowgreen","lightsteelblue1"="lightsteelblue1",
+                                 "brown4"="brown4","darkorange"="darkorange","grey60"="grey60","lightcyan1"="lightcyan1","honeydew1"="honeydew1","darkorange2"="darkorange2",
+                                 "mediumpurple3"="mediumpurple3","darkslateblue"="darkslateblue","thistle2"="thistle2","darkmagenta"="darkmagenta","lightpink4"="lightpink4","orangered4"="orangered4",
+                                 "white"="lightgrey","lightcyan"="lightcyan3"))
+    
+    
+    # For Zsummary, add threshold lines
+    if (p==2){
+      g <-  g +
+        geom_hline(yintercept=0, 
+                   color = "black") +
+        geom_hline(yintercept=2, linetype="dashed", 
+                   color = "blue",linewidth = 0.1) +
+        geom_hline(yintercept=10, linetype="dashed", 
+                   color = "darkgreen",linewidth = 0.1)
+    }
+    ggplots[[p]] <- g 
+  }
+  g <- grid.arrange(ggplots[[1]], ggplots[[2]], nrow = 1)
+  ggsave(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/Preservation/plots/modulePreservation_Zsummary_medianRank_",prs,".jpg"),g,
+         w=10,h=4, dpi=200)
+}
+
+# 10) Manhattan plot of GWAS of LOAD vs high cholesterol ----
+
+LOAD_GWAS <- read_tsv("../Datasets/GCST90027158_buildGRCh38.tsv")
+high_cholesterol_GWAS <- read_tsv("../Datasets/categorical-20002-both_sexes-1473.tsv")
+# need to add RSIDs to the high cholesterol GWAS summary statistics
+rsid_data <- read.table("../Datasets/full_variant_qc_metrics.txt", sep="\t")
+rsid_data <- rsid_data[-1,] %>% # removing first row which is the column names
+  select(V6,V5) %>%
+  rename(varid=V6,
+         variant_id=V5)
+
+names(LOAD_GWAS)
+table(LOAD_GWAS$chromosome)
+names(high_cholesterol_GWAS)
+table(high_cholesterol_GWAS$chr)
+
+# getting chr 19 for APOE effect
+LOAD_GWAS <- LOAD_GWAS %>% 
+  filter(chromosome==19) %>%
+  select(variant_id,base_pair_location,
+         effect_allele,other_allele,
+         beta,standard_error,p_value) %>%
+  mutate(neglog10_pval = -log(p_value,base = 10))
+high_cholesterol_GWAS <- high_cholesterol_GWAS %>% 
+  filter(chr==19) %>%
+  mutate(varid=paste0(chr, ':',pos,'_',ref,'_',alt)) %>%
+  select(pos,ref,alt,varid,
+         beta_EUR,se_EUR,
+         neglog10_pval_EUR) %>%
+  rename(base_pair_location=pos,
+         effect_allele=ref,
+         other_allele=alt,
+         beta=beta_EUR,
+         standard_error=se_EUR,
+         neglog10_pval=neglog10_pval_EUR)
+
+# adding rsids to high_cholesterol_GWAS
+high_cholesterol_GWAS <- merge(high_cholesterol_GWAS,rsid_data,by="varid")
+
+# merging the two datasets
+merged_GWAS <- merge(LOAD_GWAS,high_cholesterol_GWAS,
+                     by=c("variant_id"),
+                     suffixes = c("_LOAD","_high_cholesterol"))
+
+merged_GWAS_long_p <- merged_GWAS %>%
+  select(variant_id,starts_with("base_pair_location"),
+         starts_with("neglog10_pval")) %>%
+  melt(.,id=c("base_pair_location_LOAD",
+              "base_pair_location_high_cholesterol",
+              "variant_id"))
+
+merged_GWAS_long_b <- merged_GWAS %>%
+  select(variant_id,starts_with("base_pair_location"),
+         starts_with("beta")) %>%
+  melt(.,id=c("base_pair_location_LOAD",
+              "base_pair_location_high_cholesterol",
+              "variant_id"))
+
+merged_GWAS_long <- merge(merged_GWAS_long_b,merged_GWAS_long_p,
+                          by=c("variant_id","base_pair_location_LOAD",
+                               "base_pair_location_high_cholesterol"),
+                          suffixes = c("_beta","_pval")) %>%
+  mutate(APOE_LOAD=ifelse((44796743 <= base_pair_location_LOAD &
+                        base_pair_location_LOAD<=44996742),"1","0"),
+         APOE_CHL=ifelse((45300000 <= base_pair_location_LOAD &
+                            base_pair_location_LOAD<=45500000),"1","0"),
+         APOE=ifelse((APOE_LOAD=="1"|APOE_CHL=="1"),"1","0"),
+         variable_pval=ifelse(variable_pval=="neglog10_pval_LOAD","LOAD",
+                              "High Cholesterol"))
+
+# the data cleaning is long and memeory intensive, so we will save our data
+write.csv(merged_GWAS_long,"../Datasets/GWAS_merged_cleaned.csv",row.names=F)
+merged_GWAS_long <- read.csv("../Datasets/GWAS_merged_cleaned.csv")
+# let's create seperate manhattan plots
+sig <- c(1e-05,5e-08) # ,1e-06,1e-07,5e-08
+color <- c("red","orange") # ,"grey20","grey30","red"
+manhplot <- ggplot(merged_GWAS_long, 
+                   aes(x = variant_id,
+                       y = value_pval,
+                       #size = abs(value_beta),
+                       shape=factor(APOE),
+                       color = factor(variable_pval))) +
+  geom_point(alpha = 0.75,size=2) +
+  geom_hline(yintercept = -log10(sig), 
+             color = color, linetype = "dashed") + 
+  scale_color_manual(values = rep(c("#276FBF", "#183057"), 2)) +
+  labs(x = "Chromosome 19", 
+       y = "-log<sub>10</sub>(p)",
+       shape="APOE",
+       color="GWAS") + 
+  theme_minimal() +
+  guides(size="none") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.title.y = element_markdown(),
+        axis.text.x = element_blank(),
+        axis.ticks.x=element_blank()) ; manhplot
+
+# Now, let's take a look at the beta effects of the genes that are:
+  # statistically significant for both LOAD and Cholesterol @ 1e-05 suggested by our results
+  # Both genes are avialble in LOAD and high cholesterol GWAS summary statistics
+
+data_gg <- subset(merged_GWAS_long %>% 
+              select(variant_id,
+                     variable_beta,
+                     value_beta,
+                     variable_pval,
+                     value_pval) %>%
+              distinct(),
+            value_pval >= -log10(1e-05)) %>%
+  group_by(variable_pval) %>%
+  filter(n()>2) %>%
+  group_by(variant_id) %>%
+  filter(n()>2)
+
+data_gg1 <- data_gg %>%
+  select(variant_id,variable_pval,value_pval) %>%
+  distinct() %>%
+  rename(Phenotype=variable_pval)
+
+data_gg2 <- data_gg %>%
+  select(variant_id,variable_beta,value_beta) %>%
+  distinct() %>%
+  mutate(variable_beta=ifelse(variable_beta=="beta_high_cholesterol",
+                               "High Cholesterol","LOAD")) %>%
+  rename(Phenotype=variable_beta)
+
+data_gg <- merge(data_gg1,data_gg2,
+                 by=c("variant_id","Phenotype"))
+
+sig <- c(5e-05) # 
+color <- c("grey40") 
+g <- ggplot(data_gg,aes(y=value_pval,
+                   x=value_beta,
+                   color=Phenotype))+
+  geom_point() +
+  geom_hline(yintercept = -log10(sig), 
+             color = color, linetype = "dashed") +
+  geom_vline(xintercept = 0, 
+             color = "black") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))+
+  xlab(latex2exp::TeX("$\\beta-value")) +
+  ylab(latex2exp::TeX("-$\\log_{10}(p)")) +
+  ggtitle("Overalpping SNPs between GWAS of LOAD and High Cholesterol in the APOE region")
+
+# how about the correlation between these overlapping SNPs
+
+data_gg1 <- dcast(data_gg,variant_id~Phenotype,
+                  value.var="value_beta",fun=mean)
+
+g1 <- ggplot(data_gg1,aes(y=`High Cholesterol`,
+                        x=LOAD))+
+  geom_point() +
+  stat_poly_line() +
+  stat_poly_eq(use_label(c("eq", "adj.R2", "f", "p", "n"))) +
+  geom_point() +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))+
+  xlab(latex2exp::TeX("$\\beta-value$\\ of LOAD GWAS")) +
+  ylab(latex2exp::TeX("$\\beta-value$\\ of High Cholesterol GWAS")) +
+  ggtitle("Overalpping SNPs between GWAS of LOAD and High Cholesterol in the APOE region")
+g1
+
+#cor.test(data_gg1$`High Cholesterol`,data_gg1$LOAD)
+
+# saving our plots
+ggsave(paste0("../Datasets/manhattan_plot_difference_LOAD_high_cholesterol.jpg"),manhplot,
+       w=12,h=6, dpi=200)
+ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol.jpg"),g,
+       w=12,h=6, dpi=200) 
+ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol_corr.jpg"),g1,
+       w=12,h=6, dpi=200) 

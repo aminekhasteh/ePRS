@@ -122,7 +122,7 @@ primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
                                 
                                 # Removing phenotypes we selected manually refer to Pan_UKBB
                                 phenos_to_remove <- which(colnames(res) %in% meta_pheno$new_pheno_annot[which(meta_pheno$to_remove==1)])
-                                
+                              
                                 if (length(phenos_to_remove)>0) {
                                                 phenos_to_remove.phenos.names <- meta_pheno$new_pheno_annot[which(meta_pheno$to_remove==1)][which(meta_pheno$new_pheno_annot[which(meta_pheno$to_remove==1)] %in% colnames(res))]
                                                 res.clean <- res[,-phenos_to_remove]

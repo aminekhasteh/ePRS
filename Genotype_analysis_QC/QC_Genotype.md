@@ -17,16 +17,16 @@ subjects for consolidated analyses
 We are using imputed data of the ROS/MAP cohort study. The genotype data
 was filtered with the following criteria:
 
--   imputation R2 \< 0.8
--   minor allele frequency \< 0.0025
--   All triallelic variants (removed)
+- imputation R2 \< 0.8
+- minor allele frequency \< 0.0025
+- All triallelic variants (removed)
 
 Now, we will apply the extra quality control on the dataset:
 
--   Removing SNPs with MAF \< 0.01
--   Removing SNPs with low P-value from the HWE’s Fisher’s test of 1e-06
--   Excluding SNPs with missingness of 0.01
--   Excluding individuals with high rate of missing genotype at 0.01
+- Removing SNPs with MAF \< 0.01
+- Removing SNPs with low P-value from the HWE’s Fisher’s test of 1e-06
+- Excluding SNPs with missingness of 0.01
+- Excluding individuals with high rate of missing genotype at 0.01
 
 ``` bash
 #!/bin/bash --login
@@ -36,12 +36,12 @@ Now, we will apply the extra quality control on the dataset:
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --maf 0.01 \
     --hwe 1e-6 \
     --geno 0.01 \
@@ -51,12 +51,12 @@ plink \
     --out ROSMAP.QC
 ```
 
--   A total of 9,329,439 variants were detected from the bim file
--   No one was removed due to missing genotype data
--   978 variants removed due to missing genotype data
--   132 variants removed due to Hardy-Weinberg exact test
--   1,549,210 variants removed due to minor allele threshold
--   7,779,119 variants and 2067 people pass filters and QC
+- A total of 9,329,439 variants were detected from the bim file
+- No one was removed due to missing genotype data
+- 978 variants removed due to missing genotype data
+- 132 variants removed due to Hardy-Weinberg exact test
+- 1,549,210 variants removed due to minor allele threshold
+- 7,779,119 variants and 2067 people pass filters and QC
 
 Extracting the SNP list from the ROS/MAP dataset:
 
@@ -68,12 +68,12 @@ Extracting the SNP list from the ROS/MAP dataset:
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap2.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.fam \
     --extract ROSMAP.snplist \
     --out ROSMAP.QC
@@ -89,12 +89,12 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap3.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.fam \
     --het \
     --out ROSMAP.QC
@@ -121,7 +121,7 @@ write.table(valid[,c(1,2)], "ROSMAP.valid.sample", quote=F, row.names=F) # print
 ## Relatedness
 
 Now, we remove individuals with first or second degree relative
-![\\hat \\pi\>0.125](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Chat%20%5Cpi%3E0.125 "\hat \pi>0.125")
+$\hat \pi>0.125$
 
 ``` bash
 #!/bin/bash --login
@@ -131,18 +131,18 @@ Now, we remove individuals with first or second degree relative
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap5.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_1
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_1
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
-    --keep /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.valid.sample \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --keep ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.valid.sample \
     --rel-cutoff 0.125 \
-    --out /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC
+    --out ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC
 ```
 
--   Nobody was removed due relatedness.
+- Nobody was removed due relatedness.
 
 ## Creating the bed file
 
@@ -154,19 +154,19 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap.out
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile /data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.valid.sample \
     --make-bed \
-    --out /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
-    --extract /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.snplist
+    --out ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --extract ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.snplist
 ```
 
--   7,779,119 variants and 2,052 people pass filters and QC.
+- 7,779,119 variants and 2,052 people pass filters and QC.
 
 ## Removing the MHC region
 
@@ -181,12 +181,12 @@ assembly code GRCH38).
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHC.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
     --chr 6 \
     --from-bp 25477569\
     --to-bp 36480577\
@@ -195,7 +195,7 @@ plink \
     --out ROSMAP.MHC.QC
 ```
 
--   55,204 out of 7,779,119 variants loaded from .bim file.
+- 55,204 out of 7,779,119 variants loaded from .bim file.
 
 ``` bash
 #!/bin/bash --login
@@ -205,18 +205,18 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHC1.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
-    --exclude /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/ROSMAP.MHC.QC.snplist\
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --exclude ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/ROSMAP.MHC.QC.snplist\
     --make-bed \
     --out ROSMAP.QC
 ```
 
--   7,723,915 variants and 2,067 people pass filters and QC.
+- 7,723,915 variants and 2,067 people pass filters and QC.
 
 ## Removing the APOE region
 
@@ -231,12 +231,12 @@ assembly code GRCH38).
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHCAPOE.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
     --chr 19 \
     --from-bp 44796743\
     --to-bp 44996742\
@@ -245,7 +245,7 @@ plink \
     --out ROSMAP.MHCAPOE.QC
 ```
 
--   622 out of 7,723,915 variants loaded from .bim file.
+- 622 out of 7,723,915 variants loaded from .bim file.
 
 ``` bash
 #!/bin/bash --login
@@ -255,17 +255,17 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHCAPOE1.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC_APOE/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC_APOE/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
-    --exclude /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/ROSMAP.MHCAPOE.QC.snplist\
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
+    --exclude ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/ROSMAP.MHCAPOE.QC.snplist\
     --make-bed \
     --out ROSMAP.QC
 ```
 
--   7,723,293 variants and 2067 people pass filters and QC.
+- 7,723,293 variants and 2067 people pass filters and QC.
 
 The final bed file has no MHC and APOE region.

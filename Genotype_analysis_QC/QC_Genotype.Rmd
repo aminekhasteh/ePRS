@@ -1,6 +1,6 @@
 ---
 title: "Quality Control of the ROS/MAP Genotype Dataset"
-output: pdf_document
+output: github_document
 ---
 
 # Initial Quality Control of the Genotype data
@@ -32,12 +32,12 @@ Now, we will apply the extra quality control on the dataset:
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --maf 0.01 \
     --hwe 1e-6 \
     --geno 0.01 \
@@ -64,12 +64,12 @@ Extracting the SNP list from the ROS/MAP dataset:
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap2.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.fam \
     --extract ROSMAP.snplist \
     --out ROSMAP.QC
@@ -86,12 +86,12 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap3.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.fam \
     --het \
     --out ROSMAP.QC
@@ -123,15 +123,15 @@ Now, we remove individuals with first or second degree relative $\hat \pi>0.125$
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap5.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_1
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_1
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
-    --keep /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.valid.sample \
+    --bfile ../data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --keep ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.valid.sample \
     --rel-cutoff 0.125 \
-    --out /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC
+    --out ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC
 ```
 
 -   Nobody was removed due relatedness.
@@ -146,16 +146,16 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmap.out
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
+    --bfile /data/rosmap/genotype/TOPmed_imputed/vcf/merged/merged_overlap_rs \
     --keep ROSMAP.QC.valid.sample \
     --make-bed \
-    --out /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
-    --extract /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.snplist
+    --out ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --extract ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC.snplist
 ```
 
 -   7,779,119 variants and 2,052 people pass filters and QC.
@@ -172,12 +172,12 @@ Now, we remove the MHC region from the QC'd Genotype data (We used the assembly 
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHC.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
     --chr 6 \
     --from-bp 25477569\
     --to-bp 36480577\
@@ -196,13 +196,13 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHC1.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
-    --exclude /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/ROSMAP.MHC.QC.snplist\
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid/ROSMAP.QC \
+    --exclude ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_MHC/ROSMAP.MHC.QC.snplist\
     --make-bed \
     --out ROSMAP.QC
 
@@ -222,12 +222,12 @@ Now, we remove the APOE region from the QC'd Genotype data (We used the assembly
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHCAPOE.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
     --chr 19 \
     --from-bp 44796743\
     --to-bp 44996742\
@@ -246,13 +246,13 @@ plink \
 #SBATCH --job-name=QC
 #SBATCH --output QC_rosmapMHCAPOE1.out.txt
 
-cd /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC_APOE/
+cd ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC_APOE/
 
 module load PLINK2/1.90b3.46
 
 plink \
-    --bfile /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
-    --exclude /external/rprshnas01/netdata_kcni/dflab/team/ak/Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/ROSMAP.MHCAPOE.QC.snplist\
+    --bfile ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_NO_MHC/ROSMAP.QC \
+    --exclude ./Thesis/QC_Geno/ROSMAP/ROSMAP_QC_rsid_APOE_MHC/ROSMAP.MHCAPOE.QC.snplist\
     --make-bed \
     --out ROSMAP.QC
 
