@@ -5327,16 +5327,10 @@ for(prs in names(wgcna_dat_results)){
          w=10,h=4, dpi=200)
 }
 
-# 10) Manhattan plot of GWAS of LOAD vs high cholesterol ----
-
+# 10) Manhattan plot of GWAS of LOAD vs high cholesterol (memory intensive) ----
+# reading GWAS summary stats data
 LOAD_GWAS <- read_tsv("../Datasets/GCST90027158_buildGRCh38.tsv")
 high_cholesterol_GWAS <- read_tsv("../Datasets/categorical-20002-both_sexes-1473.tsv")
-# need to add RSIDs to the high cholesterol GWAS summary statistics
-rsid_data <- read.table("../Datasets/full_variant_qc_metrics.txt", sep="\t")
-rsid_data <- rsid_data[-1,] %>% # removing first row which is the column names
-  select(V6,V5) %>%
-  rename(varid=V6,
-         variant_id=V5)
 
 names(LOAD_GWAS)
 table(LOAD_GWAS$chromosome)
@@ -5346,7 +5340,8 @@ table(high_cholesterol_GWAS$chr)
 # getting chr 19 for APOE effect
 LOAD_GWAS <- LOAD_GWAS %>% 
   filter(chromosome==19) %>%
-  select(variant_id,base_pair_location,
+  select(variant_id,variant_alternate_id,
+         base_pair_location,
          effect_allele,other_allele,
          beta,standard_error,p_value) %>%
   mutate(neglog10_pval = -log(p_value,base = 10))
@@ -5363,43 +5358,172 @@ high_cholesterol_GWAS <- high_cholesterol_GWAS %>%
          standard_error=se_EUR,
          neglog10_pval=neglog10_pval_EUR)
 
+# need to add RSIDs to the high cholesterol GWAS summary statistics
+rsid_data <- read.table("../Datasets/full_variant_qc_metrics.txt", sep="\t")
+rsid_data <- rsid_data[-1,] %>% # removing first row which is the column names
+  select(V6,V5) %>%
+  rename(varid=V6,
+         variant_id=V5)
 # adding rsids to high_cholesterol_GWAS
 high_cholesterol_GWAS <- merge(high_cholesterol_GWAS,rsid_data,by="varid")
+rsid_data <- NULL
 
 # merging the two datasets
 merged_GWAS <- merge(LOAD_GWAS,high_cholesterol_GWAS,
                      by=c("variant_id"),
                      suffixes = c("_LOAD","_high_cholesterol"))
 
+# saving our data so we don't have to read the large data files again
+write.csv(merged_GWAS,"../Datasets/merged_GWAS.csv",row.names = F)
+
+merged_GWAS <- read.csv("../Datasets/merged_GWAS.csv")
+
+# allele alignment, we want:
+  # alignment ==0 --> alleles are aligned
+  # alignment ==1 --> alleles are flipped
+  # alignment ==2 --> mismatch
+names(merged_GWAS)
+
+merged_GWAS <- merged_GWAS %>%
+  mutate(alignment=ifelse((effect_allele_LOAD==effect_allele_high_cholesterol &
+                             other_allele_LOAD==other_allele_high_cholesterol),0,1))
+table(merged_GWAS$alignment)
+# a) alignment == 0
+# the good SNPs
+merged_GWAS1.good <- merged_GWAS %>%
+  filter(alignment==0)
+
+# b) alignment == 2
+# let's check if among these SNPs there are any allele flipping
+merged_GWAS2 <- merged_GWAS %>%
+  filter(alignment==1) %>%
+  mutate(alignment=ifelse((effect_allele_LOAD==other_allele_high_cholesterol &
+                             other_allele_LOAD==effect_allele_high_cholesterol),1,2))
+table(merged_GWAS2$alignment)
+merged_GWAS2.good <- merged_GWAS2 %>%
+  filter(alignment==1)
+
+# Now we apply strand flipping:
+# Strand flipping:
+# Function for finding the complementary allele
+complement <- function(x) {
+  switch (
+    x,
+    "A" = "T",
+    "C" = "G",
+    "T" = "A",
+    "G" = "C",
+    return(NA)
+  )
+}
+# SNPs that have mismatching alleles reported in the base and target data are either resolvable by
+# "strand-flipping" the alleles to their complementary alleles in e.g. 
+  # 1) the target data, such as for a SNP with A/C in the base data and G/T in the target, 
+  # 2) or non-resolvable, such as for a SNP with C/G in the base and C/T in the target.
+
+merged_GWAS3 <- merged_GWAS2 %>%
+  filter(alignment==2)
+
+# Identify SNPs that are complementary between base and target
+merged_GWAS3$other_allele_LOAD_1 <- sapply(merged_GWAS3$other_allele_LOAD, complement)
+merged_GWAS3$other_allele_high_cholesterol_1 <- sapply(merged_GWAS3$other_allele_high_cholesterol, complement)
+merged_GWAS3$effect_allele_LOAD_1 <- sapply(merged_GWAS3$effect_allele_LOAD, complement)
+merged_GWAS3$effect_allele_high_cholesterol_1 <- sapply(merged_GWAS3$effect_allele_high_cholesterol, complement)
+
+# now we identify strand flipping in SNPs:
+merged_GWAS3 <- merged_GWAS3 %>%
+  mutate(alignment=ifelse(((effect_allele_LOAD_1==effect_allele_high_cholesterol &
+                              other_allele_LOAD==other_allele_high_cholesterol)|
+                             (effect_allele_LOAD==effect_allele_high_cholesterol_1 &
+                                other_allele_LOAD==other_allele_high_cholesterol)|
+                             (effect_allele_LOAD==effect_allele_high_cholesterol &
+                                other_allele_LOAD_1==other_allele_high_cholesterol)|
+                             (effect_allele_LOAD==effect_allele_high_cholesterol &
+                                other_allele_LOAD==other_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD_1==effect_allele_high_cholesterol &
+                                other_allele_LOAD_1==other_allele_high_cholesterol)|
+                             (effect_allele_LOAD==effect_allele_high_cholesterol_1 &
+                                other_allele_LOAD==other_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD_1==effect_allele_high_cholesterol &
+                                other_allele_LOAD==other_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD==effect_allele_high_cholesterol_1 &
+                                other_allele_LOAD_1==other_allele_high_cholesterol)),0,2))
+
+table(merged_GWAS3$alignment)
+
+merged_GWAS3.good <- merged_GWAS3 %>%
+  filter(alignment==0) %>%
+  select(names(merged_GWAS1))
+# What about alignment==2 in this case?
+
+merged_GWAS4 <- merged_GWAS3 %>%
+  filter(alignment==2) %>%
+  mutate(alignment=ifelse(((effect_allele_LOAD_1==other_allele_high_cholesterol &
+                              other_allele_LOAD==effect_allele_high_cholesterol)|
+                             (effect_allele_LOAD==other_allele_high_cholesterol_1 &
+                                other_allele_LOAD==effect_allele_high_cholesterol)|
+                             (effect_allele_LOAD==other_allele_high_cholesterol &
+                                other_allele_LOAD_1==effect_allele_high_cholesterol)|
+                             (effect_allele_LOAD==other_allele_high_cholesterol &
+                                other_allele_LOAD==effect_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD_1==other_allele_high_cholesterol &
+                                other_allele_LOAD_1==effect_allele_high_cholesterol)|
+                             (effect_allele_LOAD==other_allele_high_cholesterol_1 &
+                                other_allele_LOAD==effect_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD_1==other_allele_high_cholesterol &
+                                other_allele_LOAD==effect_allele_high_cholesterol_1)|
+                             (effect_allele_LOAD==other_allele_high_cholesterol_1 &
+                                other_allele_LOAD_1==effect_allele_high_cholesterol)),1,2))
+
+table(merged_GWAS4$alignment)
+merged_GWAS4.good <- merged_GWAS4 %>%
+  select(names(merged_GWAS1))
+
+merged_GWAS_new <- rbind(merged_GWAS1.good,
+                         merged_GWAS2.good,
+                         merged_GWAS3.good,
+                         merged_GWAS4.good)
+
+table(merged_GWAS_new$alignment)
+
+# write.csv(merged_GWAS_new,"../Datasets/merged_GWAS_cleaned_strand_cleaning.csv",row.names=F)
+# merged_GWAS_new <- read.csv("../Datasets/merged_GWAS_cleaned_strand_cleaning.csv")
+merged_GWAS <- merged_GWAS_new %>%
+  filter(alignment!=2) %>%
+  # mutate(beta_high_cholesterol=ifelse(alignment==1,-beta_high_cholesterol,
+  #                                     beta_high_cholesterol))
+  mutate(beta_LOAD=ifelse(alignment==1,-beta_LOAD,beta_LOAD),
+         APOE_LOAD=ifelse((44796743 <= base_pair_location_LOAD &
+                             base_pair_location_LOAD<=44996742),"1","0"),
+         APOE_CHL=ifelse((45300000 <= base_pair_location_LOAD &
+                            base_pair_location_LOAD<=45500000),"1","0"),
+         APOE=ifelse((APOE_LOAD=="1"|APOE_CHL=="1"),"1","0"))
+table(merged_GWAS$alignment, merged_GWAS$APOE)
+
 merged_GWAS_long_p <- merged_GWAS %>%
   select(variant_id,starts_with("base_pair_location"),
-         starts_with("neglog10_pval")) %>%
+         starts_with("neglog10_pval"),APOE) %>%
   melt(.,id=c("base_pair_location_LOAD",
               "base_pair_location_high_cholesterol",
-              "variant_id"))
+              "variant_id","APOE"))
 
 merged_GWAS_long_b <- merged_GWAS %>%
   select(variant_id,starts_with("base_pair_location"),
-         starts_with("beta")) %>%
+         starts_with("beta"),APOE) %>%
   melt(.,id=c("base_pair_location_LOAD",
               "base_pair_location_high_cholesterol",
-              "variant_id"))
+              "variant_id","APOE"))
 
 merged_GWAS_long <- merge(merged_GWAS_long_b,merged_GWAS_long_p,
                           by=c("variant_id","base_pair_location_LOAD",
-                               "base_pair_location_high_cholesterol"),
+                               "base_pair_location_high_cholesterol","APOE"),
                           suffixes = c("_beta","_pval")) %>%
-  mutate(APOE_LOAD=ifelse((44796743 <= base_pair_location_LOAD &
-                        base_pair_location_LOAD<=44996742),"1","0"),
-         APOE_CHL=ifelse((45300000 <= base_pair_location_LOAD &
-                            base_pair_location_LOAD<=45500000),"1","0"),
-         APOE=ifelse((APOE_LOAD=="1"|APOE_CHL=="1"),"1","0"),
-         variable_pval=ifelse(variable_pval=="neglog10_pval_LOAD","LOAD",
+  mutate(variable_pval=ifelse(variable_pval=="neglog10_pval_LOAD","LOAD",
                               "High Cholesterol"))
 
 # the data cleaning is long and memeory intensive, so we will save our data
-write.csv(merged_GWAS_long,"../Datasets/GWAS_merged_cleaned.csv",row.names=F)
-merged_GWAS_long <- read.csv("../Datasets/GWAS_merged_cleaned.csv")
+# write.csv(merged_GWAS_long,"../Datasets/GWAS_merged_cleaned.csv",row.names=F)
+# merged_GWAS_long <- read.csv("../Datasets/GWAS_merged_cleaned.csv")
 # let's create seperate manhattan plots
 sig <- c(1e-05,5e-08) # ,1e-06,1e-07,5e-08
 color <- c("red","orange") # ,"grey20","grey30","red"
@@ -5429,74 +5553,66 @@ manhplot <- ggplot(merged_GWAS_long,
   # statistically significant for both LOAD and Cholesterol @ 1e-05 suggested by our results
   # Both genes are avialble in LOAD and high cholesterol GWAS summary statistics
 
-data_gg <- subset(merged_GWAS_long %>% 
-              select(variant_id,
-                     variable_beta,
-                     value_beta,
-                     variable_pval,
-                     value_pval) %>%
-              distinct(),
-            value_pval >= -log10(1e-05)) %>%
-  group_by(variable_pval) %>%
-  filter(n()>2) %>%
-  group_by(variant_id) %>%
-  filter(n()>2)
-
-data_gg1 <- data_gg %>%
-  select(variant_id,variable_pval,value_pval) %>%
-  distinct() %>%
-  rename(Phenotype=variable_pval)
-
-data_gg2 <- data_gg %>%
-  select(variant_id,variable_beta,value_beta) %>%
-  distinct() %>%
-  mutate(variable_beta=ifelse(variable_beta=="beta_high_cholesterol",
-                               "High Cholesterol","LOAD")) %>%
-  rename(Phenotype=variable_beta)
-
-data_gg <- merge(data_gg1,data_gg2,
-                 by=c("variant_id","Phenotype"))
-
-sig <- c(5e-05) # 
-color <- c("grey40") 
-g <- ggplot(data_gg,aes(y=value_pval,
-                   x=value_beta,
-                   color=Phenotype))+
+g1 <- ggplot(merged_GWAS %>%
+               mutate(APOE=ifelse(APOE==1,
+                                   "APOE Region",
+                                   "APOE Region Removed")) %>%
+               filter(APOE=="APOE Region") %>%
+               filter(neglog10_pval_LOAD >= -log10(5e-05) |
+                      neglog10_pval_high_cholesterol>= -log10(5e-05)) %>%
+               mutate(`Both Phenotypes`=ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                                        neglog10_pval_high_cholesterol>= -log10(5e-05)),"AND","OR")),
+             aes(y=beta_high_cholesterol,x=beta_LOAD,
+                 color=`Both Phenotypes`))+
   geom_point() +
-  geom_hline(yintercept = -log10(sig), 
-             color = color, linetype = "dashed") +
-  geom_vline(xintercept = 0, 
-             color = "black") +
-  theme_bw() +
-  theme(plot.title = element_text(hjust = 0.5))+
-  xlab(latex2exp::TeX("$\\beta-value")) +
-  ylab(latex2exp::TeX("-$\\log_{10}(p)")) +
-  ggtitle("Overalpping SNPs between GWAS of LOAD and High Cholesterol in the APOE region")
-
-# how about the correlation between these overlapping SNPs
-
-data_gg1 <- dcast(data_gg,variant_id~Phenotype,
-                  value.var="value_beta",fun=mean)
-
-g1 <- ggplot(data_gg1,aes(y=`High Cholesterol`,
-                        x=LOAD))+
-  geom_point() +
-  stat_poly_line() +
+  stat_poly_line() + # method = "rlm"
   stat_poly_eq(use_label(c("eq", "adj.R2", "f", "p", "n"))) +
   geom_point() +
   theme_bw() +
+  # facet_wrap(~APOE,nrow=1) +
   theme(plot.title = element_text(hjust = 0.5))+
-  xlab(latex2exp::TeX("$\\beta-value$\\ of LOAD GWAS")) +
-  ylab(latex2exp::TeX("$\\beta-value$\\ of High Cholesterol GWAS")) +
-  ggtitle("Overalpping SNPs between GWAS of LOAD and High Cholesterol in the APOE region")
+  xlab(latex2exp::TeX("$\\beta-values$\\ of LOAD GWAS")) +
+  ylab(latex2exp::TeX("$\\beta-values$\\ of High Cholesterol GWAS")) +
+  ggtitle(latex2exp::TeX("Overalpping SNPs ($\\alpha $\\leq 5e-05) between GWAS of LOAD and High Cholesterol in chromosome 19"))+
+  geom_label_repel(data=subset(merged_GWAS , 
+                               neglog10_pval_LOAD >= -log10(5e-08) &
+                                 neglog10_pval_high_cholesterol>= -log10(5e-08)),
+                   fill = NA,
+                   aes(label=variant_id),
+                   col="black",
+                   size=3,
+                   fontface="bold",
+                   max.overlaps = 200)
 g1
 
-#cor.test(data_gg1$`High Cholesterol`,data_gg1$LOAD)
+g2 <- ggplot(merged_GWAS %>%
+               mutate(APOE=ifelse(APOE==1,
+                                  "APOE Region",
+                                  "APOE Region Removed")) %>%
+               filter(APOE=="APOE Region") %>%
+               filter(neglog10_pval_LOAD >= -log10(5e-05) |
+                        neglog10_pval_high_cholesterol>= -log10(5e-05)) %>%
+               mutate(`Both Phenotypes`=ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                                                  neglog10_pval_high_cholesterol>= -log10(5e-05)),"AND","OR")),
+             aes(y=beta_high_cholesterol,x=beta_LOAD,
+                 color=`Both Phenotypes`))+
+  geom_point() +
+  # stat_poly_line() + # method = "rlm"
+  # stat_poly_eq(use_label(c("eq", "adj.R2", "f", "p", "n"))) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))+
+  xlab(latex2exp::TeX("$\\beta-values$\\ of LOAD GWAS")) +
+  ylab(latex2exp::TeX("$\\beta-values$\\ of High Cholesterol GWAS")) +
+  ggtitle(latex2exp::TeX("Overalpping SNPs ($\\alpha $\\leq 5e-05) between GWAS of LOAD and High Cholesterol in chromosome 19"))
+g2
+
 
 # saving our plots
 ggsave(paste0("../Datasets/manhattan_plot_difference_LOAD_high_cholesterol.jpg"),manhplot,
        w=12,h=6, dpi=200)
-ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol.jpg"),g,
-       w=12,h=6, dpi=200) 
 ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol_corr.jpg"),g1,
-       w=12,h=6, dpi=200) 
+       w=20,h=10, dpi=200) 
+ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol.jpg"),g2,
+       w=10,h=6, dpi=300) 
