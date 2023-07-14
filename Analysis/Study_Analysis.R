@@ -5312,19 +5312,24 @@ for(prs in names(wgcna_dat_results)){
     
     # For Zsummary, add threshold lines
     if (p==2){
+      if(as.numeric(prs)<=1e-06){
+        y_val=5
+      }else{
+        y_val=10
+      }
       g <-  g +
         geom_hline(yintercept=0, 
                    color = "black") +
         geom_hline(yintercept=2, linetype="dashed", 
                    color = "blue",linewidth = 0.1) +
-        geom_hline(yintercept=10, linetype="dashed", 
+        geom_hline(yintercept=y_val, linetype="dashed", 
                    color = "darkgreen",linewidth = 0.1)
     }
     ggplots[[p]] <- g 
   }
-  g <- grid.arrange(ggplots[[1]], ggplots[[2]], nrow = 1)
+  g <- grid.arrange(ggplots[[1]], ggplots[[2]], nrow = 2)
   ggsave(paste0("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/With_MHC_APOE_new/Preservation/plots/modulePreservation_Zsummary_medianRank_",prs,".jpg"),g,
-         w=10,h=4, dpi=200)
+         w=6,h=7, dpi=200)
 }
 
 # 10) Manhattan plot of GWAS of LOAD vs high cholesterol (memory intensive) ----
@@ -5453,7 +5458,7 @@ table(merged_GWAS3$alignment)
 
 merged_GWAS3.good <- merged_GWAS3 %>%
   filter(alignment==0) %>%
-  select(names(merged_GWAS1))
+  select(names(merged_GWAS1.good))
 # What about alignment==2 in this case?
 
 merged_GWAS4 <- merged_GWAS3 %>%
@@ -5477,7 +5482,7 @@ merged_GWAS4 <- merged_GWAS3 %>%
 
 table(merged_GWAS4$alignment)
 merged_GWAS4.good <- merged_GWAS4 %>%
-  select(names(merged_GWAS1))
+  select(names(merged_GWAS1.good))
 
 merged_GWAS_new <- rbind(merged_GWAS1.good,
                          merged_GWAS2.good,
@@ -5592,12 +5597,20 @@ g2 <- ggplot(merged_GWAS %>%
                filter(APOE=="APOE Region") %>%
                filter(neglog10_pval_LOAD >= -log10(5e-05) |
                         neglog10_pval_high_cholesterol>= -log10(5e-05)) %>%
-               mutate(`Both Phenotypes`=ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
-                                                  neglog10_pval_high_cholesterol>= -log10(5e-05)),"AND","OR")),
+               mutate(`Significant SNP Effect`=ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                                                  neglog10_pval_high_cholesterol >= -log10(5e-05)),"BOTH",
+                                               ifelse((neglog10_pval_LOAD < -log10(5e-05) &
+                                                         neglog10_pval_high_cholesterol>= -log10(5e-05)),"CHLSTRL",
+                                                      ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                                                                neglog10_pval_high_cholesterol < -log10(5e-05)),"LOAD","Other"))),
+                      `CHLSTRL vs LOAD SNP Effect`=ifelse((`Significant SNP Effect`=="LOAD" |
+                                                         `Significant SNP Effect`=="BOTH"),"LOAD",
+                                                      ifelse((`Significant SNP Effect`=="CHLSTRL" |
+                                                                `Significant SNP Effect`=="BOTH"),"CHLSTRL","OTHER"))),
              aes(y=beta_high_cholesterol,x=beta_LOAD,
-                 color=`Both Phenotypes`))+
+                 color=`Significant SNP Effect`))+
   geom_point() +
-  # stat_poly_line() + # method = "rlm"
+  # stat_poly_line() + 
   # stat_poly_eq(use_label(c("eq", "adj.R2", "f", "p", "n"))) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -5616,3 +5629,31 @@ ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol_corr.jpg"),g1,
        w=20,h=10, dpi=200) 
 ggsave(paste0("../Datasets/gene_APOE_LOAD_high_cholesterol.jpg"),g2,
        w=10,h=6, dpi=300) 
+
+# getting average absolute beta-values here
+ 
+merged_GWAS %>%
+  mutate(APOE=ifelse(APOE==1,
+                      "APOE Region",
+                      "APOE Region Removed")) %>%
+  filter(APOE=="APOE Region") %>%
+  filter(neglog10_pval_LOAD >= -log10(5e-05) |
+         neglog10_pval_high_cholesterol>= -log10(5e-05)) %>%
+  mutate(category=ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                           neglog10_pval_high_cholesterol>= -log10(5e-05)),"BOTH",
+                         ifelse((neglog10_pval_LOAD >= -log10(5e-05) &
+                                   neglog10_pval_high_cholesterol < -log10(5e-05)),"LOAD",
+                                ifelse((neglog10_pval_LOAD < -log10(5e-05) &
+                                          neglog10_pval_high_cholesterol>= -log10(5e-05)),"CHLSTRL","Other")))) %>%
+  group_by(category) %>%
+  mutate(beta_LOAD=abs(beta_LOAD),
+         beta_high_cholesterol=abs(beta_high_cholesterol)) %>%
+  summarise(mean_LOAD=mean(beta_LOAD),
+            sd_LOAD=sd(beta_LOAD),
+            n_LOAD=length(beta_LOAD),
+            mean_CHLSTRL=mean(beta_high_cholesterol),
+            sd_CHLSTRL=sd(beta_high_cholesterol),
+            n_CHLSTRL=length(beta_high_cholesterol),
+            mean_BOTH=mean(c(beta_LOAD,beta_high_cholesterol)),
+            sd_BOTH=sd(c(beta_LOAD,beta_high_cholesterol)),
+            n_BOTH=length(c(beta_LOAD,beta_high_cholesterol)))
