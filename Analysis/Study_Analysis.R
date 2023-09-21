@@ -2089,7 +2089,7 @@ PC_top_80 <- NULL
 N <- NULL
 index <- 1
 Study <- "ROSMAP"
-for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){ #"No_APOE","No_MHC","No_MHC_APOE",
+for(GenoType in c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")){  #"No_APOE","No_MHC","No_MHC_APOE",
                 path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
                 prs <- readRDS(paste0(path,"/Residual_results_all_p-vals.rds"))
                 

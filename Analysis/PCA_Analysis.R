@@ -232,7 +232,7 @@ pca_heatmap_dat_GEN(PCNum = 2500,Study = "ROSMAP", GenoType = "No_MHC_APOE")
 # 4) pca_assoc_dat_GEN function----
 pca_assoc_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                               GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE"),
-                              PCNum = 25,
+                              PCNum = 1000,
                               topcont = 25){
                 path_pca <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/PCA/",GenoType)
                 path <- paste0("../Datasets/CLUMP_500_0.2/",Study,"/Resid_PRS/",GenoType)
@@ -298,43 +298,30 @@ pca_assoc_dat_GEN <- function(Study=c("ROSMAP","ADNI"),
                                 #                         "ci_num2_gct","ci_num2_mct","arteriol_scler","caa_4gp","cvda_4gp2",
                                 #                         "dlbdx","hspath_any","tdp_stage4","parkdx","pathoAD","vm3123",
                                 #                         "pput3123","it3123","mf3123")
-                                
-                                indepvec.pathology <- c("plaq_n_sqrt","plaq_d_sqrt","cogdx","amyloid_sqrt","tangles_sqrt",
-                                                        "pathoAD","nft_sqrt","dlbdx")
-                                
-                                indepvec.cognition <- c("cogn_global_random_slope") # Don't have this variable: "cogn_global_at_lastvisit"
-                                
-                                indepvec.death <- c("age_death")
-                                
-                                pathnames <- c("Neuritic plaques","Diffuse plaques","Final AD","Total AB","PHF tau",
-                                               "Patho AD","NFT","Lewy body stage")
-                                
                                 # pathnames <- c("Neuritic plaques","Diffuse plaques","Total AB","PHF tau","NFT","Gross cerebral infarcts",
                                 #                "Micro cerebral infarcts","Arteriolosclerosis","Cerebral AA","Cerebral atherosclerosis",
                                 #                "Lewy body stage","Hippocampal sclerosis","TDP-43","PD Dx","Patho AD","PAM VM Caudate",
                                 #                "PAM post. putamen","PAM IT","PAM MF")
                                 
-                                cognames <- c("Global slope") #,"Global last visit"
-                                
-                                deathnames <- c("Age of death")
-                                
-                                varnameindex <- data.frame(name=c(pathnames,cognames,deathnames),var=c(indepvec.pathology,indepvec.cognition,indepvec.death))
+                                indepvec.pathology <- c("cogdx","amyloid_sqrt","tangles_sqrt")
+                                indepvec.cognition <- c("cogn_global_random_slope","cogn_globaln_lv") # Don't have this variable: "cogn_global_at_lastvisit"
+                                pathnames <- c("Final AD","Total AB","PHF tau")
+                                cognames <- c("Global slope","Global last visit")
+                                 
+                                varnameindex <- data.frame(name=c(pathnames,cognames),var=c(indepvec.pathology,indepvec.cognition))
                                 
                                 nocovars <- FALSE
                                 
                                 print("Running Associations")
                                 
-                                for(vartype in c("path","cog","deat")) {
+                                for(vartype in c("path","cog")) {
                                                 if (vartype=="path") {
                                                                 indepvec <- indepvec.pathology
                                                                 covars <- covars.pathology
                                                 } else if (vartype=="cog") {
                                                                 indepvec <- indepvec.cognition
                                                                 covars <- covars.cognition
-                                                } else {
-                                                                indepvec <- indepvec.death
-                                                                covars <- covars.death
-                                                }
+                                                } 
                                                 
                                                 if (length(indepvec)>1){
                                                                 tablist <- apply(pheno_pcs[,indepvec],2,table) %>%

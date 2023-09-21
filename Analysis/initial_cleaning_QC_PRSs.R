@@ -13,7 +13,8 @@ library(WGCNA)
 # Data cleaning function ----
   # This function applies initial QC on the PRS matrices for PC and WGCN analysis
 primary_resid_data_GEN <- function(Study=c("ROSMAP","ADNI"),
-                                   GenoType=c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE"),
+                                   GenoType=c("No_APOE","No_MHC",
+                                              "No_MHC_APOE","With_MHC_APOE"),
                                    use_snp_count=TRUE,
                                    multimodal=TRUE,
                                    snp_count_n=5,
