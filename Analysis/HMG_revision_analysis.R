@@ -830,3 +830,96 @@ for(genotype in GenoTypes){
   
 }
 
+
+# 9. Correlation of PRSLOAD and PCA-PRS LOAD ----
+# First, we need the PCA-PRS of LOAD
+PC_PRS_dat <- read.csv("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ALL/PC_PRS_dat.csv")
+PCA_PRS_LOAD_dat <- PC_PRS_dat %>% 
+  select(IID,GenoType,starts_with("LOAD")) %>%
+  rename(LOAD_PCA=LOAD)
+
+# Second, we need the PRSLOADs
+path <- '../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/'
+meta_data_lst <- list()
+for(genotype in GenoTypes){
+  prs_dat <- readRDS(paste0(path,genotype,
+                            "/Residual_results_all_p-vals.rds"))
+  data_lst_tmp <- list()
+  for(alpha in names(prs_dat)){
+    # getting the main PRS matrices
+    tmp_dat <- prs_dat[[alpha]]$residuals %>% select(LOAD,IID)
+    names(tmp_dat) <- c(paste0(names(tmp_dat)[1:length(names(tmp_dat))-1],
+                               "__",alpha), "IID")
+    data_lst_tmp[[alpha]] <- tmp_dat
+  }
+  prs_dat <- data_lst_tmp %>% reduce(full_join, by = "IID")
+  meta_data_lst[[genotype]] <- prs_dat
+}
+PRS_LOAD_dat <- bind_rows(meta_data_lst,.id = "GenoType")
+
+# combining the PRS-PCA_LOADs with PRS_LOADs
+LOAD_dat <- merge(PCA_PRS_LOAD_dat,PRS_LOAD_dat,
+                  by=c("IID","GenoType"))
+
+# Now, we produce three heatmaps
+
+alpha_values <- NULL
+corr <- NULL
+p_values <- NULL
+geno <- NULL
+index <- 1
+for(genotype in GenoTypes){
+  tmp_dat <- LOAD_dat %>% filter(GenoType==genotype) %>% select(-GenoType)
+  row.names(tmp_dat) <- tmp_dat$IID
+  tmp_dat$IID <- NULL
+  LOAD_PC <- tmp_dat$LOAD_PCA
+  tmp_dat <- tmp_dat %>% select(-LOAD_PCA)
+  for(prs in names(tmp_dat)){
+    cortest <- cor.test(LOAD_PC,tmp_dat[[prs]])
+    alpha_values[index] <- prs
+    corr[index] <- cortest$estimate
+    p_values[index] <- cortest$p.value
+    geno[index] <- genotype
+    index <- index+1
+  }
+}
+
+cor_test_results <- data.frame(geno,alpha_values,corr,p_values) %>%
+  mutate(alpha_values = gsub("LOAD__","",alpha_values),
+         geno=ifelse(geno=="No_APOE","APOE-",
+                     ifelse(geno=="No_MHC","MHC-",
+                            ifelse(geno=="No_MHC_APOE","MHC-APOE-",
+                                   "ALL"))),
+         cor_sign = ifelse(corr<0,"Negative","Positive")) 
+# Plotting:
+g <- ggplot(cor_test_results, 
+       aes(x = factor(geno), 
+           y = factor(alpha_values,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+                                            "0.0005","0.0001","5e-05","1e-05","5e-06",
+                                            "1e-06","5e-07","1e-07","5e-08")), 
+           fill = factor(cor_sign),
+           size = abs(corr))) +
+  geom_point(shape = 21, stroke = 0) +
+  geom_hline(yintercept = seq(.5, 16.5, 1), size = .2) +
+  scale_x_discrete(position = "bottom") +
+  scale_radius(range = c(1, 15)) +
+  # scale_fill_gradient(low = "orange", high = "blue") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5)) +
+  ylab(latex2exp::TeX("$\\alpha$-value threshold")) + 
+  xlab(latex2exp::TeX("Genome Area Inclusion")) +
+  guides(size = guide_legend(override.aes = list(fill = NA, color = 
+                                                   "black", stroke = .25), 
+                             label.position = "bottom",
+                             title.position = "top", 
+                             order = 1)) +
+  labs(size = latex2exp::TeX("Area = |$\\cor(PCAPRS_{LOAD},PRS_{LOAD})|"), 
+       fill = "Correlation:",
+       title = "Correlation of PRS-PCA of LOAD and PRS of LOAD")
+
+ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PRS_LOAD_PCAPRS_LOAD_cor.jpg",g,
+       w=7,h=8, dpi=200)
+ 
