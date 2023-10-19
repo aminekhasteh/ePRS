@@ -19,6 +19,7 @@ library(rms)
 library(broom)
 library(ggrepel)
 library(reshape2)
+library(factoextra) # for PCA interpretation
 
 # 1. Grouping all alpha-value thresholds per phenotype ----
 path <- '../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/'
@@ -41,9 +42,11 @@ for(genotype in GenoTypes){
 
 # 2. Applying the PC Analysis to each phenotype matrix ----
 pc1_PRS_lst <- list()
+pc1_contr_lst <- list()
 for(genotype in names(meta_data_lst)){
   prs_dat <- meta_data_lst[[genotype]]
   tmp_lst <- list()
+  tmp_lst_contr <- list()
   for(pheno in unique(gsub("\\__.*","",names(prs_dat)))){
     if(pheno=="IID"){next}
     tmp_dat <- prs_dat %>% select(starts_with(pheno))
@@ -53,14 +56,28 @@ for(genotype in names(meta_data_lst)){
       mutate(pc_explained=sum(summary(pc)$importance[2,1])*100)
     names(tmp_dat) <- c(pheno,"IID",paste0("var_explained_",pheno))
     tmp_lst[[pheno]] <- tmp_dat
+    
+    # We also want to get the top contributors to PC1
+    res.var <- get_pca_var(pc)
+    pcnum <- 1
+    var <-sum(summary(pc)$importance[2,pcnum])*100
+    ### get contributing PRS for given PC
+    pc_top <- as.data.frame(cbind(res.var$cos2[,pcnum][order(res.var$cos2[,pcnum],decreasing = T)][1:15],res.var$contrib[,pcnum][order(res.var$contrib[,pcnum],decreasing = T)][1:15]))
+    pc_top$phenotypes <- sub(".*__", "", row.names(pc_top))
+    names(pc_top) <- c("Cos2","Contribution","phenotypes")
+    row.names(pc_top) <- NULL
+    tmp_lst_contr[[pheno]] <- pc_top
   }
   # tmp_dat <- bind_rows(tmp_lst,.id="Phenotype")
   pc1_prs_dat <- tmp_lst %>% reduce(full_join, by = "IID")
   pc1_PRS_lst[[genotype]] <- pc1_prs_dat
+  tmp_lst_contr <- bind_rows(tmp_lst_contr,.id = "Phenotype")
+  pc1_contr_lst[[genotype]] <- tmp_lst_contr
 }
 
 PC_meta_data <- bind_rows(pc1_PRS_lst,.id = "GenoType")
 table(PC_meta_data$GenoType)
+PC1_contr_data <- bind_rows(pc1_contr_lst,.id = "GenoType")
 
 # Here we get the information on total variation explained by each phenotype matrix
 PC_var_explained <- PC_meta_data %>%
@@ -84,6 +101,9 @@ write.csv(PC_var_explained,
           row.names=FALSE)
 write.csv(PC_PRS_dat,
           "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ALL/PC_PRS_dat.csv",
+          row.names=FALSE)
+write.csv(PC1_contr_data,
+          "../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ALL/PC1_contr_dat.csv",
           row.names=FALSE)
 
 # 3. Applying WGCNA ----
@@ -861,7 +881,7 @@ PRS_LOAD_dat <- bind_rows(meta_data_lst,.id = "GenoType")
 LOAD_dat <- merge(PCA_PRS_LOAD_dat,PRS_LOAD_dat,
                   by=c("IID","GenoType"))
 
-# Now, we produce three heatmaps
+# Now, we produce the heatmap
 
 alpha_values <- NULL
 corr <- NULL
@@ -893,12 +913,12 @@ cor_test_results <- data.frame(geno,alpha_values,corr,p_values) %>%
          cor_sign = ifelse(corr<0,"Negative","Positive")) 
 # Plotting:
 g <- ggplot(cor_test_results, 
-       aes(x = factor(geno), 
-           y = factor(alpha_values,levels=c("1","0.1","0.05","0.01","0.005","0.001",
-                                            "0.0005","0.0001","5e-05","1e-05","5e-06",
-                                            "1e-06","5e-07","1e-07","5e-08")), 
-           fill = factor(cor_sign),
-           size = abs(corr))) +
+            aes(x = factor(geno), 
+                y = factor(alpha_values,levels=c("1","0.1","0.05","0.01","0.005","0.001",
+                                                 "0.0005","0.0001","5e-05","1e-05","5e-06",
+                                                 "1e-06","5e-07","1e-07","5e-08")), 
+                fill = factor(cor_sign),
+                size = abs(corr))) +
   geom_point(shape = 21, stroke = 0) +
   geom_hline(yintercept = seq(.5, 16.5, 1), size = .2) +
   scale_x_discrete(position = "bottom") +
@@ -918,8 +938,8 @@ g <- ggplot(cor_test_results,
                              order = 1)) +
   labs(size = latex2exp::TeX("Area = |$\\cor(PCAPRS_{LOAD},PRS_{LOAD})|"), 
        fill = "Correlation:",
-       title = "Correlation of PRS-PCA of LOAD and PRS of LOAD")
-
+       title = "Correlation of PRS-PCA of LOAD and PRS of LOAD") +
+  geom_text(aes(label = round(corr, 2)), size = 3, nudge_y = 0.1)
 ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/PRS_LOAD_PCAPRS_LOAD_cor.jpg",g,
        w=7,h=8, dpi=200)
  
