@@ -46,7 +46,7 @@ WGCNA_sftpowers_GEN <- function(Study=c("ROSMAP","ADNI"),
                                                         verbose =5,
                                                         networkType="unsigned",
                                                         blockSize = ncol(df))
-                                if(is.na(sft$powerEstimate)) { sft$powerEstimate <- 1 }
+                                if(is.na(sft$powerEstimate)) { sft$powerEstimate <- 6 }  # the default value by WGCNA
                                 print(paste0("Threshold= ",sft$powerEstimate))
                                 # p1 <- ggplot(data=sft$fitIndices,aes(y=SFT.R.sq,x=Power))+
                                 #                 geom_hline(yintercept=c(0.85,0.9),lty=2,col="red")+
