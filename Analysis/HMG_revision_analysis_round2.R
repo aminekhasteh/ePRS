@@ -5,6 +5,14 @@
     # Estimate phenotype membership probabilities within each module through repeated sampling.
     # Implement and document this analysis for at least one matrix, considering multiple alpha thresholds.
     # Include findings and implications for the robustness of eigen-PRS methodology in the manuscript revision.
+  # Q4)
+    # Recalculate R-squared values in Table 2 to account for variance in cognitive decline rate estimates:
+      # Compute mean variance of cognitive decline slopes ('c').
+      # Identify total residual variance ('b').
+      # Apply correction factor 1/(1-c/b) to current R-squared values.
+    # Update Table 2 with corrected R-squared values.
+    # Briefly discuss the adjusted R-squared impact in the manuscript.
+
 
 # Libraries ----
 GenoTypes <- c("No_APOE","No_MHC","No_MHC_APOE","With_MHC_APOE")
@@ -19,7 +27,8 @@ library(reshape2)
 library(purrr)
 library(ggbeeswarm)
 library(ggrepel)
-
+library(lme4) # For linear mixed modelling
+library(broom.mixed)
 
 # 1. Estimating probability of phenotype's beloning to each module ----
 path <- '../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/'
@@ -348,3 +357,162 @@ ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ALL/pheno_p_estimate_1e07_4.jpg",
 ggsave("../Datasets/CLUMP_500_0.2/ROSMAP/WGCNA/ALL/pheno_p_estimate_1e07_5.jpg",
        p5,
        w=11,h=10, dpi=250)
+
+
+# 2. Adjusting the R-squared values for models of predicting cognitive decline ----
+# We need to use lmer model on the longitiduinal data of the cognitive decline in ROSMAP particpants
+path <- '../Datasets/CLUMP_500_0.2/ROSMAP/Resid_PRS/'
+genotype <- GenoTypes[4]
+ROSmaster <- readRDS("../Datasets/ROSMAP_Phenotype/ROSmaster.rds")
+ROSmaster_long <- read.csv("../Datasets/ROSMAP_Phenotype/dataset_978_long_01-13-2022.csv")
+prs_dat <- readRDS(paste0(path,genotype,"/Residual_results_all_p-vals.rds"))
+prs_dat <- prs_dat[[1]]$residuals
+IIDs <- prs_dat$IID
+
+# merging the two rosmaster dataset and select needed variables
+dat_main <- merge(ROSmaster,
+                   ROSmaster_long,
+                   by=c("projid","study"),
+                   all.y=TRUE) %>%
+  filter(IID %in% IIDs) %>%
+  select(projid,FID,IID,
+         study,fu_year,
+         msex, educ,age_at_visit,
+         cogn_global,
+         cogn_global_random_slope,
+         cogn_globaln_lv) %>%
+  drop_na() %>%
+  mutate(IID=as.factor(IID))
+
+# First let's run the lmer model
+
+m <- lmer(cogn_global ~ age_at_visit*fu_year + 
+            (age_at_visit + educ) + 
+            (1+ fu_year|IID),dat_main)
+summary(m)
+coef(summary(m))
+
+# Get variance estimates for random effects
+var_estimates <- VarCorr(m)
+
+# Print the variance estimates
+print(var_estimates)
+
+
+# Extract random effects
+random_effects <- ranef(m, condVar = TRUE)
+
+# Obtain the random slopes for `fu_year` by IID
+random_slopes <- as.data.frame(random_effects$IID)
+random_slopes$IID <- row.names(random_slopes)
+row.names(random_slopes) <- NULL
+names(random_slopes) <- c("model_intercept","model_random_slope","IID")
+
+# If you want to incorporate these random slopes into your original data frame
+# (assuming the original data frame is 'dat_main' and has a column 'IID')
+dat_main_with_slopes <- dat_main %>%
+  left_join(random_slopes, by = "IID") %>% 
+  mutate(cogn_resids = resid(m)) # adding residuals
+
+# Plotting
+# Let's take a quick look at:  
+
+  # 1) model_random_slopes vs cogn_global_random_slope
+aa <- dat_main_with_slopes %>% 
+  select(IID,cogn_global_random_slope,
+         model_random_slope) %>%
+  distinct()
+cor.test(aa$cogn_global_random_slope,aa$model_random_slope)
+
+# Here x_pos and y_pos represent desired coordinates for the annotation
+x_pos <- max(aa$cogn_global_random_slope, na.rm = TRUE) * 0.8
+y_pos <- min(aa$model_random_slope, na.rm = TRUE) * 0.8
+
+# Perform the correlation test
+cor_test <- cor.test(aa$cogn_global_random_slope, aa$model_random_slope)
+
+# Create a text label with the correlation coefficient and p-value
+cor_label <- sprintf("Correlation = %.2f\np-value = %.3f", 
+                     cor_test$estimate, cor_test$p.value)
+
+# Create the ggplot
+ggplot(aa, aes(x = cogn_global_random_slope, y = model_random_slope)) +
+  geom_point() + 
+  geom_smooth(method = "lm", color = "blue") +
+  annotate("text", x = x_pos, y = y_pos, label = cor_label, 
+           hjust = 1, vjust = 1, size = 5, color = "red4") +
+  theme_bw() +
+  xlab("Random Slope of Global Cognition (Old)") +
+  ylab("Random Slope of Global Cognition (New)")
+
+  # 2) cogn_global (last visit) vs cogn_globaln_lv
+aa1 <- dat_main_with_slopes %>% 
+  group_by(IID) %>%
+  filter(fu_year==max(fu_year)) %>%
+  select(IID,cogn_global,
+         cogn_globaln_lv)
+cor.test(aa1$cogn_globaln_lv,aa1$cogn_global)
+
+# Here x_pos and y_pos represent desired coordinates for the annotation
+x_pos <- max(aa1$cogn_globaln_lv, na.rm = TRUE) * 0.8
+y_pos <- min(aa1$cogn_global, na.rm = TRUE) * 0.8
+
+# Perform the correlation test
+cor_test <- cor.test(aa1$cogn_globaln_lv, aa1$cogn_global)
+
+# Create a text label with the correlation coefficient and p-value
+cor_label <- sprintf("Correlation = %.2f\np-value = %.3f", 
+                     cor_test$estimate, cor_test$p.value)
+
+# Create the ggplot
+ggplot(aa1, aes(x = cogn_globaln_lv, y = cogn_global)) +
+  geom_point() + 
+  geom_smooth(method = "lm", color = "blue") +
+  annotate("text", x = x_pos, y = y_pos, label = cor_label, 
+           hjust = 1, vjust = 1, size = 5, color = "red4") +
+  theme_bw() +
+  xlab("Last Visit Global Cognition (Old)") +
+  ylab("Last Visit Global Cognition (New)")
+
+  # 3) The cognitive decline estimated slopes:
+# Create a sequence of fu_year values for the predictions
+fu_year_seq <- seq(min(dat_main_with_slopes$fu_year, na.rm = TRUE), 
+                   max(dat_main_with_slopes$fu_year, na.rm = TRUE), 
+                   length.out = 100)
+
+# Generate predictions for each IID over the fu_year sequence
+by_IID_predictions <- dat_main_with_slopes %>%
+  select(IID, model_intercept, model_random_slope) %>%
+  distinct() %>%
+  group_by(IID) %>%
+  do(data.frame(fu_year = fu_year_seq, 
+                predicted_cogn_global = .$model_intercept + fu_year_seq * .$model_random_slope)) %>%
+  ungroup()
+
+# Plot the observed data points and the predicted lines for each IID
+ggplot(data = dat_main_with_slopes, 
+       aes(x = fu_year, 
+           y = cogn_global, 
+           color=IID)) + 
+  geom_line(data = by_IID_predictions,
+            aes(x = fu_year,
+                y = predicted_cogn_global,
+                group = IID,
+                color=IID),
+            color = 'grey',
+            alpha = 0.5) +
+  geom_point(alpha = 0.5) +
+  # geom_line() +
+  theme_minimal() +
+  guides(color = "none")
+
+# Now, let's extract the statistics to adjust our R^2 values:
+
+# Extract the variance for the random slopes (cognitive decline slopes)
+# and the residual variance
+var_cov_matrix <- VarCorr(m)
+c <- attr(var_cov_matrix, "sc")^2 * var_cov_matrix$IID[["fu_year", "fu_year"]]  # variance of fu_year slope
+# Extract the residual standard deviation and square it to get the residual variance
+residual_std_dev <- sigma(m)
+b <- residual_std_dev^2
+
